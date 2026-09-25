@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Fitty",
+    "slug": "fitty",
+    "version": "0.1.0",
+    "scheme": "fitty",
+    "userInterfaceStyle": "light",
+    "platforms": [
+      "ios",
+      "web"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "Fitty",
+      "description": "Dein persönlicher Begleiter für Essen und Bewegung."
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Fitty verwendet ausgewählte Fotos für dein Tagebuch und deine privaten Fortschrittsvergleiche.",
+          "cameraPermission": "Fitty verwendet die Kamera für dein Tagebuch und private Fortschrittsfotos.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

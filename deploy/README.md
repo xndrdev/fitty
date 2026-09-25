@@ -1,9 +1,9 @@
-# Bereitstellung
+# Deployment
 
-Aktuell sind Anmeldung, Profil und persistente Tageschats lokal eingerichtet. Die Bereitstellung über Coolify folgt in Meilenstein 6 des [Plans](../docs/PLAN.md).
+Login, profiles, and persistent daily chats are currently set up locally. Deployment through Coolify follows in milestone 6 of the [plan](../docs/PLAN.md).
 
-Vorgesehene Dienste sind das Go-Backend, der Expo-Webexport und selbst gehostetes Supabase mit Auth, PostgreSQL und Storage. Produktionswerte und Zugangsdaten werden in Coolify gepflegt.
+The planned services are the Go backend, the Expo web export, and self-hosted Supabase with Auth, PostgreSQL, and Storage. Production values and credentials are managed in Coolify.
 
-`supabase/config.toml` konfiguriert ausschließlich die lokale Supabase CLI. Diese Datei konfiguriert keinen Coolify-Supabase-Stack. Die versionierten SQL-Migrationen gelten für beide Umgebungen; vor dem ersten Deployment werden PostgreSQL-Version und Storage-Schema auf Kompatibilität geprüft.
+`supabase/config.toml` configures only the local Supabase CLI. This file does not configure a Coolify Supabase stack. The versioned SQL migrations apply to both environments; the PostgreSQL version and Storage schema will be checked for compatibility before the first deployment.
 
-Die lokale Umgebung enthält Entwicklungszugänge und ersetzt keine Produktionskonfiguration. Login, Benutzerzuordnung und das eingeschränkte Datenbankkonto sind umgesetzt. Vor einer Veröffentlichung folgen Produktionskonten, HTTPS, die Konfiguration der Produktionszugriffe sowie Backups einschließlich der Bilddateien.
+The local environment contains development credentials and does not replace a production configuration. Login, user ownership checks, and the restricted database account are implemented. Production accounts, HTTPS, production access configuration, and backups including image files will be set up before release.

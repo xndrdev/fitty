@@ -1,42 +1,42 @@
 # Fitty
 
-Fitty wird ein privater Fitnessbegleiter für iOS und Web: ein Chat pro Tag für Essen, Sport, Walking Pad und Fragen zum Alltag. Die OpenAI API unterstützt Kalorien, Nährwerte, Beratung und die Auswertung von Fotos.
+Fitty is being built as a private fitness companion for iOS and the web: one chat per day for food, exercise, walking pad sessions, and everyday questions. The OpenAI API supports calorie and nutrition tracking, advice, and photo analysis.
 
-## Projektstand
+## Project status
 
-Stand: 17. September 2026. Anmeldung, Profil, Tageschat sowie Text- und Foto-Tracking sind vorhanden:
+As of September 17, 2026, login, profiles, daily chats, and text and photo tracking are available:
 
-- Privater E-Mail-/Passwort-Login mit Supabase Auth und gespeicherter Sitzung.
-- Tageschat mit freier Texteingabe, Datumswechsel und paginiertem Verlauf.
-- Tagesentwürfe mit Text und Fotos bleiben auf diesem Gerät nach Neuladen, App-Neustart und erneutem Login erhalten; offene Sendungen lassen sich ohne Duplikate fortsetzen.
-- Nachrichten und Profil werden über Go in PostgreSQL gespeichert und nach Neuladen oder erneutem Login wieder geladen.
-- Profil mit Name, Zeitzone, Zielen und Ernährungsvorlieben.
-- Freiwillige Kalorien- und Makroziele mit Fortschrittsanzeige; frühere Tage behalten ihre damaligen Ziele, die auch der KI als Tageskontext dienen.
-- Responsive Oberfläche für Desktop und Handy; gemeinsame Expo-Codebasis für iOS und Web.
-- KI-Antworten, Essens- und Aktivitätseinträge, Korrekturen per Chat sowie Tageswerte aus der Datenbank.
-- Einträge direkt bearbeiten und aus der Tagesübersicht entfernen, mit Schutz gegen veraltete Änderungen und wiederholte Anfragen.
-- Ganze Tageschats nach Bestätigung löschen, einschließlich Einträgen, Änderungsverläufen und privater Fotos.
-- Sichtbare Schätzungen, getrennte Aktivitätskalorien und Wiederholung nach Verarbeitungsfehlern.
-- Bis zu vier Fotos pro Nachricht, Kamera, Bildauswahl und Einfügen aus der Zwischenablage im Browser; private Speicherung, Vorschauen und Vergrößerung.
-- Eigener privater Verlauf für Fortschrittsfotos mit Aufnahmedatum, Perspektive und Vergleich zweier Aufnahmen.
+- Private email/password login with Supabase Auth and persistent sessions.
+- Daily chat with free text input, date navigation, and paginated history.
+- Daily drafts containing text and photos remain on this device after reloading, restarting the app, and signing in again; pending sends can be resumed without duplicates.
+- Messages and profiles are stored in PostgreSQL through Go and restored after reloading or signing in again.
+- Profiles with a name, time zone, goals, and dietary preferences.
+- Optional calorie and macronutrient targets with progress indicators; past days retain their historical targets, which also provide daily context for the AI.
+- Responsive desktop and mobile interface; a shared Expo codebase for iOS and the web.
+- AI responses, food and activity entries, corrections through chat, and daily totals from the database.
+- Direct editing and removal of entries from the daily overview, with protection against stale changes and repeated requests.
+- Deletion of entire daily chats after confirmation, including entries, change histories, and private photos.
+- Clearly marked estimates, separate activity calories, and retries after processing errors.
+- Up to four photos per message, camera capture, image selection, and pasting from the browser clipboard; private storage, previews, and enlarged views.
+- A separate private progress photo history with capture dates, viewing angles, and comparison of two photos.
 
-**Prüfstand:** Text-Tracking und Fotos sind mit PostgreSQL, privatem Storage und echten `gpt-5-mini`-Antworten geprüft. Bildtests decken Lebensmittelschätzung, Etikettberechnung, Korrektur anhand eines vorherigen Fotos, Trainingsanzeige, Speisekartenberatung und ein unlesbares Bild ab. Desktop- und mobiler Browser sind geprüft; Kamera/HEIC auf einem echten iPhone und Coolify-Bereitstellung stehen noch aus. Ohne OpenAI-Schlüssel bleibt Fitty als Tagebuch nutzbar.
+**Verification status:** Text tracking and photos have been tested with PostgreSQL, private Storage, and real `gpt-5-mini` responses. Image tests cover food estimates, label calculations, corrections based on a previous photo, workout displays, menu advice, and an unreadable image. Desktop and mobile browsers have been tested; camera/HEIC testing on a physical iPhone and Coolify deployment remain pending. Without an OpenAI key, Fitty remains usable as a diary.
 
 ## Stack
 
-| Bereich | Technologie |
+| Area | Technology |
 | --- | --- |
-| iOS und Web | React Native, Expo, TypeScript, Expo Router |
-| Anwendungslogik | Go mit pgx |
-| Datenbank | PostgreSQL innerhalb von Supabase |
-| Anmeldung | Supabase Auth |
-| Bilder | Supabase Storage mit privatem Bucket |
-| KI | OpenAI Responses API über Go, konfigurierbares Modell |
-| Betrieb, geplant | Selbst gehostet über Coolify |
+| iOS and web | React Native, Expo, TypeScript, Expo Router |
+| Application logic | Go with pgx |
+| Database | PostgreSQL within Supabase |
+| Authentication | Supabase Auth |
+| Images | Supabase Storage with a private bucket |
+| AI | OpenAI Responses API through Go, configurable model |
+| Hosting, planned | Self-hosted through Coolify |
 
-## Lokal starten
+## Run locally
 
-Voraussetzungen: Node.js **24.21.0 LTS** (siehe `.node-version`), npm 11, Go **1.27** und Docker.
+Requirements: Node.js **24.21.0 LTS** (see `.node-version`), npm 11, Go **1.27**, and Docker.
 
 ```bash
 npm ci
@@ -45,15 +45,15 @@ npm run db:migrate
 npm run setup:local
 ```
 
-Auf dem aktuellen Rechner statt `npm run db:start` das bereits angelegte Netzwerk verwenden:
+On the current machine, use the existing network instead of `npm run db:start`:
 
 ```bash
 npm run db:start -- --network-id fitty-local
 ```
 
-Das Setup erzeugt einen privaten Entwicklungszugang sowie ignorierte `.env`-Dateien. Die Anmeldedaten stehen ausschließlich in **`.local/zugang.txt`**. Erneutes Setup verwendet dasselbe lokale Konto; es schreibt die lokale Konfiguration erneut. Es ist ausschließlich für die lokale Supabase-Instanz vorgesehen.
+Setup creates a private development account and ignored `.env` files. Credentials are stored exclusively in **`.local/zugang.txt`**. Running setup again reuses the same local account and rewrites the local configuration. It is intended only for the local Supabase instance.
 
-In zwei Terminals starten:
+Start these in two terminals:
 
 ```bash
 npm run dev:api
@@ -63,44 +63,44 @@ npm run dev:api
 npm run dev:web
 ```
 
-**Oberfläche: http://localhost:8788** · Healthcheck: http://127.0.0.1:8787/healthz · Supabase Studio: http://127.0.0.1:54323
+**Interface: http://localhost:8788** · Health check: http://127.0.0.1:8787/healthz · Supabase Studio: http://127.0.0.1:54323
 
-## KI aktivieren
+## Enable AI
 
-In der ignorierten Datei `server/.env` ergänzen:
+Add the following to the ignored `server/.env` file:
 
 ```dotenv
-OPENAI_API_KEY=dein_api_schluessel
+OPENAI_API_KEY=your_api_key
 FITTY_OPENAI_MODEL=gpt-5-mini
 ```
 
-Anschließend die Go-API neu starten. Den Schlüssel niemals in die Client-Konfiguration schreiben oder committen. `gpt-5-mini` wurde lokal mit vier echten Beispielnachrichten geprüft; das Modell bleibt konfigurierbar. Den Modellzugang auf jeder neuen Installation prüfen.
+Then restart the Go API. Never put the key in the client configuration or commit it. `gpt-5-mini` has been tested locally with four real example messages; the model remains configurable. Verify model access on each new installation.
 
-Neue Nachrichten werden nach dem Speichern automatisch verarbeitet. Bereits ohne KI gespeicherte Nachrichten können einzeln über **„Auswerten“** nachgeholt werden. Reine Beratung und geplantes Essen bleiben ohne Buchung; überprüfbare Mengenänderungen korrigieren vorhandene Einträge. Tageswerte stammen aus gespeicherten Einträgen, nicht aus dem Antworttext.
+New messages are processed automatically after saving. Messages previously saved without AI can be processed individually using **Analyze** (the German UI label is **“Auswerten”**). Advice and planned meals do not create tracking entries; verifiable quantity changes update existing entries. Daily totals come from stored entries, not from the response text.
 
-Für die Analyse werden Profil, die für den ausgewählten Tag gültigen Ziele, Tageschat, passende Tracking-Daten und gegebenenfalls Bilddaten an OpenAI übertragen. Die API wird separat vom ChatGPT-Abonnement abgerechnet.
+Analysis sends the profile, targets effective on the selected day, daily chat, relevant tracking data, and any image data to OpenAI. API usage is billed separately from the ChatGPT subscription.
 
-## Tagesziele festlegen
+## Set daily targets
 
-In der Tagesübersicht **„Tagesziele festlegen“** oder im Profil **„Deine Tagesziele“** öffnen. Kalorien, Protein, Kohlenhydrate und Fett sind einzeln optional; ein leeres Feld bedeutet kein Ziel. Mit **„Tagesziele speichern“** gelten Änderungen ab heute in deiner gespeicherten Profilzeitzone. Frühere Tage behalten ihre damaligen Ziele.
+Open **Set daily targets** (**“Tagesziele festlegen”**) in the daily overview or **Your daily targets** (**“Deine Tagesziele”**) in the profile. Calories, protein, carbohydrates, and fat are individually optional; an empty field means no target. **Save daily targets** (**“Tagesziele speichern”**) applies changes from today in your saved profile time zone. Past days retain their historical targets.
 
-Die Tageskarte zeigt Aufnahme, Ziel und Fortschritt. Aktivitätskalorien bleiben separat. Fitty verwendet die gesetzten Ziele für den Beratungskontext; es berechnet keine Zielvorgaben und ändert sie nicht per Chat. Technische Details stehen in der [Entwicklungsanleitung](docs/ENTWICKLUNG.md#persönliche-tagesziele).
+The daily card shows intake, targets, and progress. Activity calories remain separate. Fitty uses the configured targets as context for advice; it does not calculate target recommendations or change them through chat. Technical details are in the [development guide](docs/DEVELOPMENT.md#personal-daily-targets).
 
-## Fotos verwenden
+## Use photos
 
-Im Chat **„Fotos“** oder **„Kamera“** wählen; im Browser lassen sich Bilder auch in das Nachrichtenfeld einfügen. Ergänze zum Beispiel „Mein Mittagessen“, „Davon habe ich 150 g gegessen“ oder eine Frage zur Speisekarte. Eine reine Bildnachricht ist ebenfalls möglich; bei unklarem Verzehr fragt Fitty nach.
+Choose **Photos** (**“Fotos”**) or **Camera** (**“Kamera”**) in the chat; in the browser, images can also be pasted into the message field. Add text such as “My lunch,” “I ate 150 g of this,” or a question about a menu. Image-only messages are also supported; Fitty asks a follow-up question if consumption is unclear.
 
-`npm run setup:local` hinterlegt auch den privaten Storage-Zugang als `FITTY_SUPABASE_SERVICE_ROLE_KEY` in `server/.env`. Für eine bestehende Installation zuerst die Migrationen anwenden, das lokale Setup erneut ausführen und Go neu starten; der vorhandene OpenAI-Schlüssel bleibt erhalten. Der Service-Schlüssel darf niemals in die Client-Konfiguration gelangen.
+`npm run setup:local` also stores the private Storage credentials as `FITTY_SUPABASE_SERVICE_ROLE_KEY` in `server/.env`. For an existing installation, apply the migrations first, rerun local setup, and restart Go; the existing OpenAI key is preserved. The service key must never enter the client configuration.
 
-Die App bereitet Bilder bis 20 MiB als JPEG mit höchstens 2.048 Pixeln je Seite auf. Go prüft jeden Upload, entfernt Metadaten und speichert höchstens 8 MiB pro Bild. Unbenutzte Uploads werden nach 24 Stunden bereinigt. Details und Grenzen stehen in der [Entwicklungsanleitung](docs/ENTWICKLUNG.md#fotos-und-bildanalyse).
+The app converts images up to 20 MiB to JPEG with a maximum of 2,048 pixels per side. Go validates every upload, removes metadata, and stores at most 8 MiB per image. Unused uploads are cleaned up after 24 hours. Details and limitations are in the [development guide](docs/DEVELOPMENT.md#photos-and-image-analysis).
 
-## Fortschrittsfotos vergleichen
+## Compare progress photos
 
-**„Fortschrittsfotos“** in der Navigation öffnen, ein Foto aufnehmen oder auswählen und Aufnahmedatum sowie Perspektive festlegen. Speichere regelmäßig neue Aufnahmen und wähle im Verlauf zwei davon als **Foto A** und **Foto B**. Der Vergleich zeigt beide Bilder vollständig; durch Antippen kannst du sie vergrößern. Ein Filter hilft, etwa zwei Aufnahmen von vorne zu finden.
+Open **Progress photos** (**“Fortschrittsfotos”**) in the navigation, capture or select a photo, and set its capture date and viewing angle. Save new photos regularly and select two from the history as **Photo A** (**“Foto A”**) and **Photo B** (**“Foto B”**). The comparison shows both complete images; tap to enlarge them. A filter helps you find, for example, two front-view photos.
 
-Die Bilder bleiben privat in deinem Konto und werden nicht an die KI geschickt. Sie haben einen eigenen Verlauf unabhängig von Tageschats. Einzelne Fortschrittsfotos lassen sich nach Bestätigung entfernen. Noch nicht gespeicherte Fotoauswahlen bleiben nur in der geöffneten Ansicht erhalten. Details stehen in der [Entwicklungsanleitung](docs/ENTWICKLUNG.md#fortschrittsfotos).
+The images remain private to your account and are not sent to the AI. They have their own history, independent of daily chats. Individual progress photos can be removed after confirmation. Unsaved photo selections remain only in the open view. Details are in the [development guide](docs/DEVELOPMENT.md#progress-photos).
 
-## Prüfen und bauen
+## Check and build
 
 ```bash
 npm run check
@@ -112,11 +112,11 @@ npm run bundle:ios
 npm run db:lint
 ```
 
-`test:tracking` prüft die Worker ohne Modellaufrufe; dafür den laufenden Go-Server zuvor stoppen. `test:local` und `test:photos` benötigen laufendes Supabase und die Go-API und speichern ausdrücklich ohne KI-Auswertung. Sie verwenden temporäre Konten und entfernen ihre Testdaten anschließend. `bundle:ios` erzeugt ein JavaScript-/Hermes-Bundle, keine signierte installierbare App.
+`test:tracking` tests the workers without model calls; stop the running Go server first. `test:local` and `test:photos` require Supabase and the Go API to be running and explicitly save without AI analysis. They use temporary accounts and remove their test data afterward. `bundle:ios` creates a JavaScript/Hermes bundle, not a signed, installable app.
 
-## Dokumentation
+## Documentation
 
-- [Umsetzungsplan](docs/PLAN.md): Anforderungen und Meilensteine.
-- [Architektur](docs/ARCHITEKTUR.md): Datenmodell, Zugriff, KI und Bilder.
-- [Entwicklung](docs/ENTWICKLUNG.md): Konfiguration, iPhone-Verbindung und Prüfstand.
-- [Bereitstellung](deploy/README.md): Geplanter Coolify-Betrieb.
+- [Implementation plan](docs/PLAN.md): requirements and milestones.
+- [Architecture](docs/ARCHITECTURE.md): data model, access, AI, and images.
+- [Development](docs/DEVELOPMENT.md): configuration, iPhone connectivity, and verification status.
+- [Deployment](deploy/README.md): planned Coolify hosting.

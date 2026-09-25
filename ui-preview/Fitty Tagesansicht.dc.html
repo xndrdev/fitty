@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #FBFAF4; }
+  body { font-family: "Instrument Sans", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #1E241C; }
+  a { color: #2F5D3A; text-decoration: none; }
+  a:hover { color: #23472C; text-decoration: underline; }
+  textarea, input, button { font: inherit; color: inherit; }
+  ::placeholder { color: #9AA093; }
+  .om-scroll { scrollbar-width: thin; scrollbar-color: #D9D8C9 transparent; }
+  .om-scroll::-webkit-scrollbar { width: 10px; }
+  .om-scroll::-webkit-scrollbar-thumb { background: #DFDED0; border-radius: 99px; border: 3px solid #FBFAF4; }
+  @keyframes fittyIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+</style>
+</helmet>
+<div ref="{{ rootRef }}" style="display: grid; grid-template-columns: {{ shellCols }}; min-height: 100vh; background: #FBFAF4;">
+
+  <aside style="display: {{ asideDisplay }}; flex-direction: column; gap: 28px; padding: 22px 18px; background: #F4F3EA; border-right: 1px solid #E6E4D8; position: sticky; top: 0; height: 100vh;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="width: 34px; height: 34px; border-radius: 11px; background: #2F5D3A; color: #F7F6EE; display: grid; place-items: center; font-family: 'Instrument Serif', Georgia, serif; font-size: 20px; line-height: 1;">f</div>
+      <span style="font-size: 19px; font-weight: 600; letter-spacing: -0.01em;">fitty</span>
+    </div>
+
+    <nav style="display: flex; flex-direction: column; gap: 4px;">
+      <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: #2F5D3A; color: #F7F6EE; font-size: 14px; font-weight: 600;">
+        <span style="width: 6px; height: 6px; border-radius: 99px; background: #BBD9A8;"></span>
+        Heutiger Tag
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: #4B5246; font-size: 14px; font-weight: 500; cursor: pointer;" style-hover="background: #EAE9DC;">
+        <span style="width: 6px; height: 6px; border-radius: 99px; background: #C6C4B2;"></span>
+        Wochenübersicht
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: #4B5246; font-size: 14px; font-weight: 500; cursor: pointer;" style-hover="background: #EAE9DC;">
+        <span style="width: 6px; height: 6px; border-radius: 99px; background: #C6C4B2;"></span>
+        Ziele
+      </div>
+    </nav>
+
+    <div style="display: flex; flex-direction: column; gap: 10px; min-height: 0; flex: 1;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between;">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #8A9082;">Verlauf</span>
+        <span style="font-size: 12px; color: #8A9082;">7 Tage</span>
+      </div>
+      <div class="om-scroll" style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; min-height: 0; padding-right: 2px;">
+        <div style="padding: 11px 12px; border-radius: 12px; background: #FFFFFF; border: 1px solid #D5DECC; box-shadow: 0 1px 0 rgba(31,44,28,0.03); cursor: pointer;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <span style="font-size: 13px; font-weight: 600;">Heute</span>
+            <span style="font-size: 11px; font-weight: 600; color: #2F5D3A; background: #E7EEE4; padding: 2px 7px; border-radius: 99px;">290 kcal</span>
+          </div>
+          <div style="margin-top: 7px; height: 4px; border-radius: 99px; background: #EDECE0; overflow: hidden;">
+            <div style="width: 13%; height: 100%; background: #2F5D3A;"></div>
+          </div>
+        </div>
+        <div style="padding: 11px 12px; border-radius: 12px; border: 1px solid transparent; cursor: pointer;" style-hover="background: #EAE9DC;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <span style="font-size: 13px; font-weight: 500; color: #4B5246;">Di, 15. Sept.</span>
+            <span style="font-size: 11px; color: #8A9082;">2.140 kcal</span>
+          </div>
+          <div style="margin-top: 7px; height: 4px; border-radius: 99px; background: #EDECE0; overflow: hidden;">
+            <div style="width: 97%; height: 100%; background: #9FB795;"></div>
+          </div>
+        </div>
+        <div style="padding: 11px 12px; border-radius: 12px; border: 1px solid transparent; cursor: pointer;" style-hover="background: #EAE9DC;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <span style="font-size: 13px; font-weight: 500; color: #4B5246;">Mo, 14. Sept.</span>
+            <span style="font-size: 11px; color: #8A9082;">1.980 kcal</span>
+          </div>
+          <div style="margin-top: 7px; height: 4px; border-radius: 99px; background: #EDECE0; overflow: hidden;">
+            <div style="width: 90%; height: 100%; background: #9FB795;"></div>
+          </div>
+        </div>
+        <div style="padding: 11px 12px; border-radius: 12px; border: 1px solid transparent; cursor: pointer;" style-hover="background: #EAE9DC;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <span style="font-size: 13px; font-weight: 500; color: #4B5246;">So, 13. Sept.</span>
+            <span style="font-size: 11px; color: #8A9082;">2.410 kcal</span>
+          </div>
+          <div style="margin-top: 7px; height: 4px; border-radius: 99px; background: #EDECE0; overflow: hidden;">
+            <div style="width: 100%; height: 100%; background: #C2A05A;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 16px; border-top: 1px solid #E0DECF;">
+      <div style="width: 30px; height: 30px; border-radius: 99px; background: #DCE5D5; color: #2F5D3A; display: grid; place-items: center; font-size: 12px; font-weight: 700;">FT</div>
+      <div style="min-width: 0; flex: 1;">
+        <div style="font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Mein Profil</div>
+        <div style="font-size: 11px; color: #8A9082; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">fitty@example.test</div>
+      </div>
+      <div title="Abmelden" style="font-size: 12px; color: #8A9082; padding: 6px 8px; border-radius: 8px; cursor: pointer;" style-hover="background: #EAE9DC; color: #4B5246;">↪</div>
+    </div>
+  </aside>
+
+  <main style="display: flex; flex-direction: column; min-width: 0; height: 100vh;">
+
+    <header style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: {{ headerPad }}; border-bottom: 1px solid #E6E4D8; background: rgba(251,250,244,0.92); backdrop-filter: blur(8px);">
+      <sc-if value="{{ narrow }}" hint-placeholder-val="{{ false }}">
+        <div style="flex: 1 0 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px;">
+          <div style="display: flex; align-items: center; gap: 9px;">
+            <div style="width: 28px; height: 28px; border-radius: 9px; background: #2F5D3A; color: #F7F6EE; display: grid; place-items: center; font-family: 'Instrument Serif', Georgia, serif; font-size: 17px; line-height: 1;">f</div>
+            <span style="font-size: 17px; font-weight: 600; letter-spacing: -0.01em;">fitty</span>
+          </div>
+          <div style="width: 32px; height: 32px; border-radius: 99px; background: #DCE5D5; color: #2F5D3A; display: grid; place-items: center; font-size: 11px; font-weight: 700;">FT</div>
+        </div>
+      </sc-if>
+      <div>
+        <div style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #8A9082;">Dein Tag</div>
+        <h1 style="margin: 6px 0 0; font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: {{ h1Size }}; line-height: 1.05; letter-spacing: -0.015em; text-wrap: pretty;">{{ dateLong }}</h1>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div onClick="{{ prevDay }}" title="Vorheriger Tag" style="width: 36px; height: 36px; border-radius: 10px; border: 1px solid #DEDCCD; background: #FFFFFF; display: grid; place-items: center; font-size: 15px; color: #4B5246; cursor: pointer;" style-hover="border-color: #2F5D3A; color: #2F5D3A;">‹</div>
+        <div onClick="{{ goToday }}" style="padding: 0 16px; height: 36px; border-radius: 10px; background: #FFFFFF; border: 1px solid #DEDCCD; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #2F5D3A; cursor: pointer;" style-hover="border-color: #2F5D3A;">
+          <span style="width: 6px; height: 6px; border-radius: 99px; background: #2F5D3A;"></span>
+          {{ dayChip }}
+        </div>
+        <div onClick="{{ nextDay }}" title="Nächster Tag" style="width: 36px; height: 36px; border-radius: 10px; border: 1px solid #DEDCCD; background: #FFFFFF; display: grid; place-items: center; font-size: 15px; color: #4B5246; cursor: pointer;" style-hover="border-color: #2F5D3A; color: #2F5D3A;">›</div>
+      </div>
+    </header>
+
+    <div class="om-scroll" style="flex: 1; overflow-y: auto; min-height: 0; padding: {{ bodyPad }};">
+      <div style="max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+
+        <section style="border: 1px solid #E0DECF; border-radius: 18px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(31,44,28,0.04);">
+          <div style="display: flex; flex-wrap: wrap; gap: 20px 28px; align-items: center; padding: 22px 24px;">
+
+            <div style="display: flex; align-items: center; gap: 16px; flex: 0 1 auto;">
+              <div style="position: relative; width: 104px; height: 104px; border-radius: 99px; background: conic-gradient(#2F5D3A {{ kcalDeg }}, #EDECE0 0);">
+                <div style="position: absolute; inset: 11px; border-radius: 99px; background: #FFFFFF; display: grid; place-items: center; text-align: center;">
+                  <div>
+                    <div style="font-family: 'Instrument Serif', Georgia, serif; font-size: 30px; line-height: 1;">{{ kcal }}</div>
+                    <div style="font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: #8A9082; margin-top: 3px;">von {{ kcalGoalLabel }}</div>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #8A9082;">Kalorien</span>
+                <span style="font-size: 15px; font-weight: 600; color: #2F5D3A;">{{ kcalLeft }} kcal übrig</span>
+                <span style="font-size: 12px; color: #8A9082; max-width: 130px; text-wrap: pretty;">Aktivität wird nicht abgezogen</span>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0; flex: 1 1 240px;">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px;">
+                  <span style="font-size: 13px; font-weight: 600;">Protein</span>
+                  <span style="font-size: 13px; color: #6B7264;"><strong style="color: #1E241C;">34,3 g</strong> / 150 g</span>
+                </div>
+                <div style="height: 7px; border-radius: 99px; background: #EDECE0; overflow: hidden;">
+                  <div style="width: 23%; height: 100%; border-radius: 99px; background: oklch(0.46 0.08 150);"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px;">
+                  <span style="font-size: 13px; font-weight: 600;">Kohlenhydrate</span>
+                  <span style="font-size: 13px; color: #6B7264;"><strong style="color: #1E241C;">31 g</strong> / 220 g</span>
+                </div>
+                <div style="height: 7px; border-radius: 99px; background: #EDECE0; overflow: hidden;">
+                  <div style="width: 14%; height: 100%; border-radius: 99px; background: oklch(0.6 0.08 80);"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px;">
+                  <span style="font-size: 13px; font-weight: 600;">Fett</span>
+                  <span style="font-size: 13px; color: #6B7264;"><strong style="color: #1E241C;">5,3 g</strong> / 70 g</span>
+                </div>
+                <div style="height: 7px; border-radius: 99px; background: #EDECE0; overflow: hidden;">
+                  <div style="width: 8%; height: 100%; border-radius: 99px; background: oklch(0.56 0.08 35);"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 24px; border-top: 1px solid #EFEEE3; background: #FCFBF5;">
+            <div style="display: flex; align-items: center; gap: 9px;">
+              <span style="width: 26px; height: 26px; border-radius: 8px; background: #E7EEE4; color: #2F5D3A; display: grid; place-items: center; font-size: 13px;">→</span>
+              <span style="font-size: 14px;"><strong>15,6 km</strong> <span style="color: #6B7264;">Bewegung · 20.000 Schritte</span></span>
+            </div>
+            <span style="font-size: 12px; color: #8A9082;">1 Aktivität ohne Kalorienangabe</span>
+          </div>
+
+          <div style="padding: 4px 24px 6px; border-top: 1px solid #EFEEE3;">
+            <div onClick="{{ toggleEntries }}" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; cursor: pointer;">
+              <span style="font-size: 13px; font-weight: 600; color: #2F5D3A;">{{ entriesLabel }}</span>
+              <span style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 11px; font-weight: 600; color: #8A6A1F; background: #F6EED8; padding: 3px 9px; border-radius: 99px;">3 geschätzt</span>
+                <span style="font-size: 12px; color: #8A9082;">{{ caret }}</span>
+              </span>
+            </div>
+            <sc-if value="{{ expanded }}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; flex-direction: column; gap: 8px; padding-bottom: 18px; animation: fittyIn 0.18s ease-out;">
+                <sc-for list="{{ entries }}" as="e" hint-placeholder-count="3">
+                  <div style="display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 12px 14px; border: 1px solid #EDECE0; border-radius: 12px; background: #FFFFFF;">
+                    <div style="min-width: 0; flex: 1 1 150px;">
+                      <div style="font-size: 14px; font-weight: 600; text-wrap: pretty;">{{ e.name }}</div>
+                      <div style="font-size: 12px; color: #6B7264; margin-top: 2px;">{{ e.detail }}</div>
+                    </div>
+                    <div style="font-size: 13px; font-weight: 600; white-space: nowrap;">{{ e.value }}</div>
+                    <div style="font-size: 12px; font-weight: 600; color: #2F5D3A; padding: 5px 10px; border-radius: 8px; border: 1px solid #D5DECC; cursor: pointer; white-space: nowrap;" style-hover="background: #E7EEE4;">Korrigieren</div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </section>
+
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="height: 1px; flex: 1; background: #E6E4D8;"></div>
+          <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #9AA093;">Gespräch</span>
+          <div style="height: 1px; flex: 1; background: #E6E4D8;"></div>
+        </div>
+
+        <sc-for list="{{ messages }}" as="m" hint-placeholder-count="5">
+          <div style="display: flex; flex-direction: column;" style-hover="">
+            <div style="max-width: {{ bubbleMax }}; align-self: {{ m.align }}; padding: 13px 16px; border-radius: 16px; background: {{ m.bg }}; border: 1px solid {{ m.border }}; animation: fittyIn 0.2s ease-out;">
+              <sc-if value="{{ m.isBot }}" hint-placeholder-val="{{ false }}">
+                <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 6px;">
+                  <span style="width: 18px; height: 18px; border-radius: 6px; background: #2F5D3A; color: #F7F6EE; display: grid; place-items: center; font-family: 'Instrument Serif', Georgia, serif; font-size: 11px; line-height: 1;">f</span>
+                  <span style="font-size: 12px; font-weight: 600; color: #2F5D3A;">Fitty</span>
+                </div>
+              </sc-if>
+              <div style="font-size: 14.5px; line-height: 1.5; text-wrap: pretty;">{{ m.text }}</div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                <span style="font-size: 11px; color: #8A9082;">{{ m.time }}</span>
+                <span style="width: 3px; height: 3px; border-radius: 99px; background: #C6C4B2;"></span>
+                <span style="font-size: 11px; color: #8A9082;">{{ m.status }}</span>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+
+      </div>
+    </div>
+
+    <footer style="padding: {{ footerPad }}; border-top: 1px solid #E6E4D8; background: #FBFAF4;">
+      <div style="max-width: 780px; margin: 0 auto;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+          <div onClick="{{ chipA }}" style="font-size: 12.5px; font-weight: 500; color: #4B5246; padding: 7px 12px; border-radius: 99px; border: 1px solid #DEDCCD; background: #FFFFFF; cursor: pointer;" style-hover="border-color: #2F5D3A; color: #2F5D3A;">+ Mahlzeit</div>
+          <div onClick="{{ chipB }}" style="font-size: 12.5px; font-weight: 500; color: #4B5246; padding: 7px 12px; border-radius: 99px; border: 1px solid #DEDCCD; background: #FFFFFF; cursor: pointer;" style-hover="border-color: #2F5D3A; color: #2F5D3A;">+ Training</div>
+          <div onClick="{{ chipC }}" style="font-size: 12.5px; font-weight: 500; color: #4B5246; padding: 7px 12px; border-radius: 99px; border: 1px solid #DEDCCD; background: #FFFFFF; cursor: pointer;" style-hover="border-color: #2F5D3A; color: #2F5D3A;">+ Wasser</div>
+          <div onClick="{{ chipD }}" style="font-size: 12.5px; font-weight: 500; color: #4B5246; padding: 7px 12px; border-radius: 99px; border: 1px solid #DEDCCD; background: #FFFFFF; cursor: pointer;" style-hover="border-color: #2F5D3A; color: #2F5D3A;">Wie viel Protein fehlt?</div>
+        </div>
+        <div style="border: 1px solid #DEDCCD; border-radius: 16px; background: #FFFFFF; padding: 12px 14px; box-shadow: 0 1px 2px rgba(31,44,28,0.04);">
+          <textarea value="{{ draft }}" onChange="{{ onDraft }}" onKeyDown="{{ onKey }}" rows="2" placeholder="Erzähl von deinem Tag – z. B. „2 Eier und ein Toast zum Frühstück“" style="width: 100%; border: 0; outline: none; resize: none; background: transparent; font-size: 14.5px; line-height: 1.5; min-height: 46px;"></textarea>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px;">
+            <span style="font-size: 11.5px; color: #9AA093;">Für {{ dateShort }} · {{ count }}/8.000 · ⏎ senden</span>
+            <div onClick="{{ send }}" style="padding: 9px 20px; border-radius: 10px; background: {{ sendBg }}; color: #F7F6EE; font-size: 13.5px; font-weight: 600; cursor: pointer;">Senden</div>
+          </div>
+        </div>
+        <sc-if value="{{ showHint }}" hint-placeholder-val="{{ true }}">
+          <div style="font-size: 11.5px; color: #9AA093; margin-top: 9px; text-wrap: pretty;">Nährwerte können Schätzungen sein. Korrekturen einfach in den Chat schreiben – Fitty passt die Werte an.</div>
+        </sc-if>
+      </div>
+    </footer>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;kcalGoal&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:2200,&quot;tsType&quot;:&quot;number&quot;,&quot;min&quot;:1200,&quot;max&quot;:4000,&quot;step&quot;:50,&quot;unit&quot;:&quot;kcal&quot;,&quot;section&quot;:&quot;Ziele&quot;}}">
+class Component extends DCLogic {
+  state = {
+    expanded: false,
+    draft: "",
+    offset: 0,
+    messages: [
+      { id: 1, who: "me", text: "Heute morgen habe ich einen Shake mit 40g Whey und 200g ungesüßter Mandelmilch getrunken", time: "18:12", status: "ausgewertet" },
+      { id: 2, who: "me", text: "Dann Walkingpad, 20.000 Schritte", time: "18:12", status: "ausgewertet" },
+      { id: 3, who: "bot", text: "Shake erfasst: 185 kcal, 33 g Protein, 4 g KH, 5 g Fett. Die Nährwerte sind geschätzt – sag mir gern die genauen Angaben.", time: "20:02", status: "gespeichert" },
+      { id: 4, who: "bot", text: "Walkingpad erfasst: ca. 15,6 km aus 20.000 Schritten. Kalorien und Dauer sind unbekannt.", time: "20:02", status: "gespeichert" },
+      { id: 5, who: "me", text: "ich habe eine Banane gegessen", time: "20:07", status: "ausgewertet" },
+      { id: 6, who: "bot", text: "Erfasst: 1 mittelgroße Banane – ca. 105 kcal, 1,3 g Protein, 27 g KH, 0,3 g Fett (geschätzt).", time: "20:07", status: "gespeichert" }
+    ]
+  };
+
+  rootRef = React.createRef();
+
+  componentDidMount() {
+    const measure = () => {
+      const w = (this.rootRef.current && this.rootRef.current.clientWidth) || window.innerWidth;
+      if (w !== this.state.w) this.setState({ w });
+    };
+    measure();
+    if (typeof ResizeObserver !== "undefined" && this.rootRef.current) {
+      this._ro = new ResizeObserver(measure);
+      this._ro.observe(this.rootRef.current);
+    }
+    this._onResize = measure;
+    window.addEventListener("resize", this._onResize);
+  }
+
+  componentWillUnmount() {
+    if (this._ro) this._ro.disconnect();
+    window.removeEventListener("resize", this._onResize);
+  }
+
+  days = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+  months = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+
+  date() {
+    const d = new Date(2026, 8, 16);
+    d.setDate(d.getDate() + this.state.offset);
+    return d;
+  }
+
+  send = () => {
+    const t = this.state.draft.trim();
+    if (!t) return;
+    const now = new Date();
+    const time = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+    this.setState(s => ({
+      draft: "",
+      messages: s.messages.concat([{ id: Date.now(), who: "me", text: t, time, status: "wird ausgewertet …" }])
+    }));
+  };
+
+  chip = (t) => () => this.setState({ draft: t });
+
+  renderVals() {
+    const goal = this.props.kcalGoal ?? 2200;
+    const kcal = 290;
+    const d = this.date();
+    const pct = Math.min(1, kcal / goal);
+    const w = this.state.w || 1200;
+    const narrow = w < 820;
+    const tight = w < 560;
+    return {
+      rootRef: this.rootRef,
+      narrow,
+      shellCols: narrow ? "minmax(0, 1fr)" : "264px minmax(0, 1fr)",
+      asideDisplay: narrow ? "none" : "flex",
+      headerPad: narrow ? "14px 16px 14px" : "22px 32px 18px",
+      bodyPad: narrow ? "16px 16px 12px" : "24px 32px 12px",
+      footerPad: narrow ? "10px 16px 14px" : "12px 32px 20px",
+      h1Size: tight ? "25px" : (narrow ? "29px" : "34px"),
+      bubbleMax: narrow ? "92%" : "72%",
+      showHint: !narrow,
+      kcal,
+      kcalGoalLabel: goal.toLocaleString("de-DE"),
+      kcalLeft: Math.max(0, goal - kcal).toLocaleString("de-DE"),
+      kcalDeg: (pct * 360).toFixed(1) + "deg",
+      dateLong: this.days[d.getDay()] + ", " + d.getDate() + ". " + this.months[d.getMonth()] + " " + d.getFullYear(),
+      dateShort: d.getDate() + ". " + this.months[d.getMonth()].slice(0, 3) + ".",
+      dayChip: this.state.offset === 0 ? "Heute" : (this.state.offset === -1 ? "Gestern" : "Anderer Tag"),
+      prevDay: () => this.setState(s => ({ offset: s.offset - 1 })),
+      nextDay: () => this.setState(s => ({ offset: s.offset + 1 })),
+      goToday: () => this.setState({ offset: 0 }),
+      expanded: this.state.expanded,
+      caret: this.state.expanded ? "▲" : "▼",
+      entriesLabel: this.state.expanded ? "Einträge ausblenden" : "3 Einträge anzeigen",
+      toggleEntries: () => this.setState(s => ({ expanded: !s.expanded })),
+      entries: [
+        { name: "Whey-Shake mit Mandelmilch", detail: "40 g Whey · 200 g Mandelmilch · geschätzt", value: "185 kcal" },
+        { name: "Banane, mittelgroß", detail: "1 Stück · geschätzt", value: "105 kcal" },
+        { name: "Walkingpad", detail: "20.000 Schritte · 15,6 km · Kalorien unbekannt", value: "– kcal" }
+      ],
+      messages: this.state.messages.map(m => ({
+        ...m,
+        isBot: m.who === "bot",
+        align: m.who === "bot" ? "flex-start" : "flex-end",
+        bg: m.who === "bot" ? "#FFFFFF" : "#E7EEE0",
+        border: m.who === "bot" ? "#E6E4D8" : "#D5E0C9"
+      })),
+      draft: this.state.draft,
+      count: this.state.draft.length,
+      sendBg: this.state.draft.trim() ? "#2F5D3A" : "#A9B3A3",
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      onKey: (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); this.send(); } },
+      send: this.send,
+      chipA: this.chip("Zum Mittag "),
+      chipB: this.chip("Training: "),
+      chipC: this.chip("500 ml Wasser getrunken"),
+      chipD: this.chip("Wie viel Protein fehlt mir heute noch?")
+    };
+  }
+}
+</script>
+</body>
+</html>

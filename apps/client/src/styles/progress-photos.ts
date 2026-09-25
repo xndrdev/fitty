@@ -1,0 +1,40 @@
+import { StyleSheet } from 'react-native';
+import { fonts } from './app';
+
+const text = { fontFamily: fonts.body, color: '#253222' };
+
+export const styles = StyleSheet.create({
+  screen: { gap: 22, minWidth: 0 },
+  heading: { fontFamily: fonts.heading, fontSize: 36, lineHeight: 41, color: '#1E241C' },
+  subheading: { fontFamily: fonts.heading, fontSize: 26, lineHeight: 32, color: '#1E241C' },
+  section: { gap: 14, borderWidth: 1, borderColor: '#E0DECF', borderRadius: 18, padding: 16, backgroundColor: '#FFFFFF', minWidth: 0 },
+  hint: { ...text, fontSize: 13, lineHeight: 20, color: '#62695B' },
+  label: { ...text, fontSize: 14, lineHeight: 20, fontWeight: '600' },
+  small: { ...text, fontSize: 12, lineHeight: 18, color: '#62695B' },
+  success: { ...text, fontSize: 13, lineHeight: 20, color: '#2F5D3A' },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center' },
+  form: { gap: 14 },
+  field: { gap: 7, minWidth: 0 },
+  input: { ...text, fontSize: 16, minHeight: 48, minWidth: 0, borderWidth: 1, borderColor: '#B3B7A8', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 11, backgroundColor: '#FFFFFF' },
+  invalid: { borderColor: '#982D23' },
+  focus: { outlineColor: '#2F5D3A', outlineWidth: 2, outlineStyle: 'solid', outlineOffset: 2 },
+  error: { ...text, fontSize: 13, lineHeight: 20, color: '#982D23' },
+  notice: { padding: 14, borderRadius: 12, backgroundColor: '#F6EED8', gap: 10 },
+  draftImage: { width: '100%', height: 290, backgroundColor: '#F3F2EA', borderRadius: 12 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, alignItems: 'flex-start' },
+  card: { flexBasis: 230, flexGrow: 1, maxWidth: 370, minWidth: 0, borderWidth: 1, borderColor: '#E0DECF', borderRadius: 14, padding: 12, gap: 10, backgroundColor: '#FFFFFF' },
+  selectedCard: { borderColor: '#2F5D3A', backgroundColor: '#F3F6EE' },
+  photoFrame: { gap: 8, minWidth: 0 },
+  thumbnail: { width: '100%', height: 220, borderRadius: 10, backgroundColor: '#ECECE3' },
+  imageButton: { borderRadius: 10, minWidth: 0 },
+  imagePlaceholder: { minHeight: 100, justifyContent: 'center', gap: 8, padding: 10, backgroundColor: '#F3F2EA', borderRadius: 10 },
+  selection: { ...text, fontSize: 12, lineHeight: 18, fontWeight: '600', color: '#2F5D3A' },
+  comparison: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
+  comparisonItem: { flex: 1, minWidth: 0, gap: 9 },
+  comparisonCaption: { minHeight: 36 },
+  comparisonImage: { width: '100%', height: 280, borderRadius: 10, backgroundColor: '#ECECE3' },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(21, 29, 21, 0.72)', justifyContent: 'center', alignItems: 'center', padding: 16 },
+  modalCard: { width: '100%', maxWidth: 480, borderRadius: 18, padding: 20, gap: 16, backgroundColor: '#FFFFFF', maxHeight: '90%' },
+  fullScreen: { flex: 1, padding: 16, backgroundColor: '#F6F5EC', gap: 12 },
+  fullImage: { flex: 1, minHeight: 0, width: '100%' },
+});

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Image, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Image, Keyboard, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { api, APIError, dateLabel, errorMessage, todayIn } from '../lib/chat-api';
 import { discardPhoto, DraftPhoto, pickPhotos, readPhotoBytes } from '../lib/photos';
 import { mergeProgressPhotos, progressDateError, progressDateLabel, ProgressPhoto, ProgressPhotoPage, ProgressView, progressViewLabel, progressViews } from '../lib/progress-photos';
@@ -82,6 +82,7 @@ export function ProgressPhotos({ userId, timeZone, onBusy }: {
 
   async function choosePhoto(camera: boolean) {
     if (controlsLocked || mutationLock.current || !photosEnabled) return;
+    Keyboard.dismiss();
     mutationLock.current = true; setPicking(true); setError(''); setNotice('');
     try {
       const selected = await pickPhotos(camera, 1);

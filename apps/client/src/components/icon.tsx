@@ -13,6 +13,7 @@ const paths = {
   right: 'M10 6l6 6-6 6',
   close: 'M6 6l12 12 M18 6 6 18',
   plus: 'M12 5v14 M5 12h14',
+  trash: 'M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7',
 };
 export type IconName = keyof typeof paths;
 

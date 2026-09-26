@@ -4,13 +4,15 @@ import { fonts } from './app';
 const body = { fontFamily: fonts.body, color: '#253222' };
 
 export const styles = StyleSheet.create({
-  overlay: { flex: 1, padding: 16, justifyContent: 'center', alignItems: 'center', backgroundColor: '#14251CB8' },
+  overlay: { flex: 1, minHeight: 0, padding: 12, justifyContent: 'center', alignItems: 'center' },
   sheet: { width: '100%', maxWidth: 600, maxHeight: '100%', flexShrink: 1, backgroundColor: '#FBFAF4', borderRadius: 20, overflow: 'hidden' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: 20, borderBottomWidth: 1, borderBottomColor: '#E0DECF' },
+  headerCompact: { padding: 14 },
   headingGroup: { flex: 1, minWidth: 0, gap: 4 },
   eyebrow: { ...body, color: '#62695B', fontSize: 10, fontWeight: '600', letterSpacing: 1.1, textTransform: 'uppercase' },
   title: { fontFamily: fonts.heading, color: '#1E241C', fontSize: 29, lineHeight: 33 },
-  scroll: { flexShrink: 1 },
+  titleCompact: { fontSize: 24, lineHeight: 28 },
+  scroll: { flexGrow: 0, flexShrink: 1, flexBasis: 'auto' },
   content: { padding: 20, gap: 18 },
   field: { gap: 7 },
   label: { ...body, fontSize: 13, lineHeight: 19, fontWeight: '600' },

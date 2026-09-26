@@ -18,7 +18,7 @@
     "typecheck": "npm run typecheck --workspace @fitty/client",
     "test:api": "cd server && go test ./...",
     "vet:api": "cd server && go vet ./...",
-    "check": "npm run typecheck && npm run test:drafts && npm run test:targets && npm run test:progress-photos && npm run test:api && npm run vet:api",
+    "check": "npm run typecheck && npm run test:drafts && npm run test:targets && npm run test:progress-photos && npm run test:keyboard && npm run test:api && npm run vet:api",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
     "db:status": "supabase status",
@@ -30,6 +30,7 @@
     "test:tracking": "node scripts/test-tracking.mjs",
     "test:photos": "node scripts/test-photos.mjs",
     "test:drafts": "node apps/client/src/lib/draft-store.test.cjs && node apps/client/src/hooks/use-drafts.test.cjs",
+    "test:keyboard": "node apps/client/src/components/keyboard-layout.test.cjs",
     "test:targets": "node apps/client/src/lib/targets.test.cjs",
     "test:progress-photos": "node apps/client/src/lib/progress-photos.test.cjs"
   },

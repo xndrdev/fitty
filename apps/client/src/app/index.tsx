@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { AppState, Platform, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardScreen } from '../components/keyboard-layout';
 import { Login } from '../components/login';
 import { Workspace } from '../components/workspace';
 import { Button } from '../components/ui';
@@ -26,10 +26,10 @@ export default function HomeScreen() {
     return () => { active = false; data.subscription.unsubscribe(); subscription?.remove(); if (Platform.OS !== 'web') supabase!.auth.stopAutoRefresh(); };
   }, []);
 
-  return <SafeAreaView style={s.screen}>
+  return <KeyboardScreen>
     {!supabase ? <View style={s.pageScroll}><Text style={s.heading}>Fitty ist noch nicht eingerichtet.</Text><Text style={s.subtitle}>Bitte zuerst das lokale Setup aus der README ausführen und die App neu starten.</Text></View>
       : loading ? <View style={s.pageScroll}><Text style={s.subtitle}>Fitty wird geladen …</Text></View>
       : error ? <View style={s.pageScroll}><Text style={s.error}>Die Sitzung konnte nicht geladen werden.</Text><Button label="Zur Anmeldung" onPress={() => { setError(false); setSession(null); }} /></View>
       : session ? <Workspace key={session.user.id} userId={session.user.id} email={session.user.email ?? ''} /> : <Login />}
-  </SafeAreaView>;
+  </KeyboardScreen>;
 }

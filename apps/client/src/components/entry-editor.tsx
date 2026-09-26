@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Keyboard, Modal, Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { randomUUID } from 'expo-crypto';
 import { api, APIError, dateLabel, Entry, EntryValues, errorMessage, Summary } from '../lib/chat-api';
 import { styles as s } from '../styles/entry-editor';
 import { Button, ErrorNotice } from './ui';
+import { FormScrollView, KeyboardScreen } from './keyboard-layout';
 
 export type EntryEditorMode = 'edit' | 'delete';
 type NumericKey = 'calories' | 'protein_g' | 'carbs_g' | 'fat_g' | 'duration_minutes' | 'distance_km';
@@ -68,6 +69,8 @@ export function EntryEditor({ date, entry: initialEntry, mode, analysisBusy, onC
   date: string; entry: Entry; mode: EntryEditorMode; analysisBusy: boolean;
   onClose: () => void; onSaved: () => void; onRefresh: () => void;
 }) {
+  const { width } = useWindowDimensions();
+  const compact = width < 500;
   const [entry, setEntry] = useState(initialEntry);
   const [draft, setDraft] = useState(() => draftFor(initialEntry));
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof Draft, string>>>({});
@@ -97,7 +100,7 @@ export function EntryEditor({ date, entry: initialEntry, mode, analysisBusy, onC
     if (!conflict) setError('');
     setNotice('');
   }
-  function close() { if (!lock.current && !pending.current) onClose(); }
+  function close() { if (!lock.current && !pending.current) { Keyboard.dismiss(); onClose(); } }
 
   async function submit() {
     if (lock.current || actionDisabled) return;
@@ -155,14 +158,14 @@ export function EntryEditor({ date, entry: initialEntry, mode, analysisBusy, onC
   }
 
   return <Modal visible transparent animationType="none" onRequestClose={close} accessibilityLabel={deleting ? 'Eintrag löschen' : 'Eintrag bearbeiten'}>
-    <KeyboardAvoidingView style={s.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardScreen modal><View style={s.overlay}>
       <View style={s.sheet} accessibilityViewIsModal>
-        <View style={s.header}>
+        <View style={[s.header, compact && s.headerCompact]}>
           <View style={s.headingGroup}><Text style={s.eyebrow}>{entry.kind === 'food' ? 'Essen' : 'Bewegung'} · {dateLabel(date)}</Text>
-            <Text role="heading" aria-level={2} style={s.title}>{deleting ? 'Eintrag löschen?' : 'Eintrag bearbeiten'}</Text></View>
+            <Text role="heading" aria-level={2} style={[s.title, compact && s.titleCompact]}>{deleting ? 'Eintrag löschen?' : 'Eintrag bearbeiten'}</Text></View>
           <Button variant="ghost" icon="close" iconOnly label="Schließen" accessibilityLabel="Eintrag schließen" disabled={saving || reloading || !!pending.current} onPress={close} />
         </View>
-        <ScrollView ref={content} style={s.scroll} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
+        <FormScrollView scrollRef={content} style={s.scroll} contentContainerStyle={s.content}>
           {deleting ? <>
             <Text style={s.entryName}>{entry.label}</Text>
             {!!entry.amount && <Text style={s.text}>{entry.amount}</Text>}
@@ -191,7 +194,7 @@ export function EntryEditor({ date, entry: initialEntry, mode, analysisBusy, onC
             <Text style={s.hint}>{deleting ? 'Übernimm den aktuellen Stand, bevor du das Löschen erneut bestätigst.' : '„Aktuelle Werte übernehmen“ ersetzt deinen Entwurf. Danach kannst du die neuen Werte bearbeiten.'}</Text>
             <Button secondary label="Aktuelle Werte übernehmen" disabled={frozen || analysisBusy} onPress={adoptLatest} />
           </View>}
-        </ScrollView>
+        </FormScrollView>
         <View style={s.footer}>
           <ErrorNotice text={error} />
           {!!notice && <Text accessibilityLiveRegion="polite" style={s.hint}>{notice}</Text>}
@@ -205,10 +208,10 @@ export function EntryEditor({ date, entry: initialEntry, mode, analysisBusy, onC
               onFocus={() => setDeleteFocused(true)} onBlur={() => setDeleteFocused(false)}
               style={({ pressed }) => [s.deleteButton, actionDisabled && s.disabled, pressed && s.pressed, deleteFocused && s.focus]}>
               <Text style={s.deleteText}>{saving ? 'Löschen …' : pending.current ? 'Erneut versuchen' : 'Löschen'}</Text>
-            </Pressable> : <Button label={saving ? 'Speichern …' : pending.current ? 'Erneut versuchen' : 'Änderungen speichern'} disabled={actionDisabled} onPress={() => void submit()} />)}
+            </Pressable> : <Button label={saving ? 'Speichern …' : pending.current ? 'Erneut versuchen' : compact ? 'Speichern' : 'Änderungen speichern'} accessibilityLabel={saving ? 'Speichern …' : pending.current ? 'Erneut versuchen' : 'Änderungen speichern'} disabled={actionDisabled} onPress={() => void submit()} />)}
           </View>
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </View></KeyboardScreen>
   </Modal>;
 }

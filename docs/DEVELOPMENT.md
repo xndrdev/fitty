@@ -1,6 +1,6 @@
 # Local development
 
-As of September 17, 2026. Login, profiles, personal daily targets, daily chats, AI text processing, private photo attachments with image analysis, and a separate progress photo comparison are available. Coolify hosting and testing on a physical iPhone will follow. Detailed verification status is documented below.
+As of September 26, 2026. Login, profiles, personal daily targets, daily chats, AI text processing, private photo attachments with image analysis, and a separate progress photo comparison are available. Mobile keyboard handling has been revised following initial iPhone feedback. Coolify hosting and full acceptance testing on a physical iPhone will follow. Detailed verification status is documented below.
 
 ## Versions
 
@@ -62,6 +62,7 @@ Interface: **http://localhost:8788**. Sign in using the credentials from `.local
 | `npm run test:tracking` | Test tracking workers with controlled responses against PostgreSQL |
 | `npm run test:targets` | Test optional targets, decimal input, and progress calculations |
 | `npm run test:progress-photos` | Test calendar dates and merging paginated photo histories |
+| `npm run test:keyboard` | Test keyboard dismissal, focused-field scrolling, and native/web separation |
 
 After an intentional `db:reset`, rerun setup to recreate the local account. Do not use a reset for normal updates.
 
@@ -362,15 +363,32 @@ Migration applied locally; TypeScript, unit tests, Go tests, `go vet`, PostgreSQ
 
 Chromium against the real Go API, Supabase Auth, PostgreSQL, and private Storage: upload with date/viewing angle, date boundaries, exactly identical UUID/metadata/JPEG bytes after a lost success response, chronological history, viewing angle filters, A/B comparison, enlargement, deletion cancellation, deletion retries, and physical Storage cleanup passed. Reloading preserves saved photos; an existing daily chat draft survives switching sections and daily totals do not change. Comparison checked at widths of 1280, 390, and 320 pixels without horizontal overflow. An additional mock browser run covers comparison selection across pages and filters, discarding an unsaved selection, and locked navigation after uncertain network responses. No unexpected console errors or warnings; simulated network interruptions produce expected browser messages. Temporary accounts and Storage files were removed without OpenAI calls. Camera capture, native permission dialogs, and interaction on a physical iPhone remain pending.
 
+### Mobile keyboard UX, September 26, 2026
+
+The original chat placed keyboard avoidance below the navigation headers, while login and profile forms had none. Numeric inputs also lacked an explicit keyboard dismissal control. Keyboard avoidance now wraps the screen before safe-area padding; the entry editor has its own wrapper inside its native modal. Forms reveal the active input within the actual scrollable area, including space reserved for fixed save actions. A native “Fertig” button dismisses text and numeric keyboards. Keyboard listeners and native measurements are excluded on the web.
+
+While typing on a phone, the chat hides its navigation and suggestion rows, reduces spacing, and keeps the selected date visible. Draft errors and uncertain send results remain accessible. The composer can scroll when attachments or notices exceed the available height. Navigation uses compact, labelled icon buttons on narrow screens; the entry editor uses shorter save text to keep its actions on one row. Email submission moves focus to the password field.
+
+Verification:
+
+- `npm run check` passed, including four keyboard tests with controlled native measurements/events. These cover dismissal on iOS/Android, listener cleanup, fields below or above the visible region, unrelated forms, and web behavior.
+- A Chromium run with isolated Auth/API fixtures passed 26 checks: login focus, chat at widths of 320/390/430/1280 pixels, message sending, profile and target saves, entry editing, and progress photo navigation. Short views at 390 × 430 and 320 × 320 retain reachable fields and save controls. There was no horizontal overflow in the checked pages and no uncaught browser error. These checks did not write to real accounts or call OpenAI.
+- TypeScript, web export, and the iOS JavaScript/Hermes export passed. Screenshots and the browser results are stored locally in `.local/ux-review/` and are excluded from Git.
+
+Physical-device acceptance remains open: reload the project in Expo Go, type a multiline chat message, edit a numeric daily target, and edit an entry near the bottom of its form. Check that the input, “Fertig”, and send/save actions stay reachable with the iPhone keyboard open; repeat with photos attached, in landscape, and after closing/reopening the keyboard. Browser viewport resizing and controlled event tests do not reproduce the native keyboard animation, safe-area geometry, or interactive dismissal.
+
 ### Verification limits
 
-- A physical iPhone, native build, and Coolify hosting remain pending.
+- Full physical iPhone acceptance, a standalone native build, and Coolify hosting remain pending.
 - Real model access, four text workflows, and six image scenarios have been tested. This is not a comprehensive assessment of portion estimates, advice, or model reliability. Complex meals and poor-quality real labels require additional everyday samples. Label calculations also come from the model and must be checked when in doubt. Measured timings are individual local samples; actual API costs have not been evaluated.
 - Camera capture, native permission dialogs, HEIC conversion, and uploads with the actual iPhone keyboard still need device testing despite the successful iOS bundle. Browser testing does not replace this acceptance step.
 - `npm audit` reports 13 moderate warnings in the Expo dependency chain (`uuid` and `decode-uri-component`). No compatible automatic fix is offered; check upstream fixes again before production deployment.
 
 ## References
 
+- [React Native 0.86: KeyboardAvoidingView](https://reactnative.dev/docs/0.86/keyboardavoidingview)
+- [React Native 0.86: ScrollView](https://reactnative.dev/docs/0.86/scrollview)
+- [React Native 0.86: Keyboard](https://reactnative.dev/docs/0.86/keyboard)
 - [Supabase: React Native authentication](https://supabase.com/docs/guides/auth/quickstarts/react-native)
 - [Supabase: Validate tokens with getUser](https://supabase.com/docs/reference/javascript/auth-getuser)
 - [Supabase: Create accounts administratively](https://supabase.com/docs/reference/javascript/auth-admin-createuser)

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { Keyboard, Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { api, dateLabel, Day, DayDeletionResult, DayPage, errorMessage, moveDate, Profile, todayIn } from '../lib/chat-api';
 import { supabase } from '../lib/supabase';
 import { styles as s } from '../styles/app';
@@ -11,10 +11,14 @@ import { ProgressPhotos } from './progress-photos';
 import { useDrafts } from '../hooks/use-drafts';
 import { styles as draftStyles } from '../styles/drafts';
 import { DayDelete } from './day-delete';
+import { FormScrollView, useKeyboardVisible } from './keyboard-layout';
 
 export function Workspace({ email, userId }: { email: string; userId: string }) {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const wide = width >= 900;
+  const keyboardVisible = useKeyboardVisible();
+  const typing = !wide && keyboardVisible;
+  const compactChat = !wide && (keyboardVisible || height < 650);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileError, setProfileError] = useState('');
   const [revision, setRevision] = useState(0);
@@ -76,8 +80,9 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || Number.isNaN(parsed.valueOf()) || parsed.getUTCFullYear() < 1900 || parsed.toISOString().slice(0, 10) !== value) {
       setDateError('Bitte ein gültiges Datum als JJJJ-MM-TT eingeben.'); return;
     }
-    setDate(value); setDateInput(value); setDateError(''); setDatePickerOpen(false); setPane('chat'); setDeletedDate('');
+    Keyboard.dismiss(); setDate(value); setDateInput(value); setDateError(''); setDatePickerOpen(false); setPane('chat'); setDeletedDate('');
   }
+  function openPane(value: typeof pane) { Keyboard.dismiss(); setPane(value); }
   async function logout() {
     setBusy(true); setLogoutError('');
     try {
@@ -102,7 +107,7 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
     finally { if (alive.current) setBusy(false); }
   }
   const hasDraft = !!(currentDraft.value.text || currentDraft.value.photos.length || currentDraft.value.pending);
-  const draftNotice = <ScrollView style={draftStyles.notice} contentContainerStyle={s.field} keyboardShouldPersistTaps="handled">
+  const draftNotice = <ScrollView style={[draftStyles.notice, compactChat && draftStyles.noticeCompact]} contentContainerStyle={s.field} keyboardShouldPersistTaps="handled">
     {!currentDraft.loaded ? <><Text style={s.small}>Entwurf wird geladen …</Text><ErrorNotice text={currentDraft.error} />
       {!!currentDraft.error && <Button secondary label="Entwurf erneut laden" onPress={() => void drafts.load(date)} />}</>
       : currentDraft.error ? <><ErrorNotice text={currentDraft.error} />
@@ -113,11 +118,11 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
       : currentDraft.task || currentDraft.committing ? <Text style={s.small}>Entwurf wird auf diesem Gerät gespeichert …</Text>
       : currentDraft.value.pending ? <Text style={s.small}>Dieser Sendevorgang ist noch offen. Mit „Erneut senden“ wird dieselbe Nachricht geprüft und gegebenenfalls gespeichert.</Text>
       : hasDraft && <Text style={s.small}>Entwurf auf diesem Gerät gespeichert.</Text>}
-    {hasDraft && currentDraft.loaded && !currentDraft.value.pending && !currentDraft.value.deletion && !deleteOpen && <>
+    {hasDraft && (!typing || discardOpen) && currentDraft.loaded && !currentDraft.value.pending && !currentDraft.value.deletion && !deleteOpen && <>
       {discardOpen ? <><Text style={s.small}>Text und Fotoauswahl für diesen Tag auf diesem Gerät verwerfen?</Text><View style={s.row}>
         <Button secondary label="Entwurf behalten" disabled={working} onPress={() => setDiscardOpen(false)} />
         <Button secondary label="Entwurf endgültig verwerfen" disabled={working || currentDraft.conflict} onPress={() => void discardDraft()} />
-      </View></> : <Button variant="ghost" label="Entwurf verwerfen" disabled={working} onPress={() => setDiscardOpen(true)} />}
+      </View></> : <Button variant="ghost" label="Entwurf verwerfen" disabled={working} onPress={() => { Keyboard.dismiss(); setDiscardOpen(true); }} />}
     </>}
   </ScrollView>;
   const today = profile ? todayIn(profile.time_zone) : '';
@@ -147,12 +152,12 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
     {wide && <View style={s.sidebar}>
       <Brand /><View style={s.sidebarNav}>
         <Button icon="calendar" label="Heutiger Tag" secondary={pane !== 'chat' || date !== today} disabled={busy || !today} onPress={() => openDate(today)} />
-        <Button variant="ghost" icon="user" label="Ziele & Vorlieben" selected={pane === 'profile'} disabled={busy} onPress={() => setPane('profile')} />
-        <Button variant="ghost" icon="photo" label="Fortschrittsfotos" selected={pane === 'progress'} disabled={busy} onPress={() => setPane('progress')} />
+        <Button variant="ghost" icon="user" label="Ziele & Vorlieben" selected={pane === 'profile'} disabled={busy} onPress={() => openPane('profile')} />
+        <Button variant="ghost" icon="photo" label="Fortschrittsfotos" selected={pane === 'progress'} disabled={busy} onPress={() => openPane('progress')} />
       </View>
       <View style={s.historySection}><Text style={s.eyebrow}>Dein Verlauf</Text><ScrollView style={s.fill} contentContainerStyle={s.historyList}>{history}</ScrollView></View>
       <View style={s.sidebarBottom}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Mein Profil" disabled={busy} accessibilityState={{ disabled: busy, selected: pane === 'profile' }} onPress={() => setPane('profile')}
+        <Pressable accessibilityRole="button" accessibilityLabel="Mein Profil" disabled={busy} accessibilityState={{ disabled: busy, selected: pane === 'profile' }} onPress={() => openPane('profile')}
           onFocus={() => setFocusedControl('profile')} onBlur={() => setFocusedControl('')} style={({ pressed }) => [s.profileLink, pressed && s.pressed, focusedControl === 'profile' && s.focus]}>
           <View style={s.avatar}><Text style={s.avatarText}>{initials}</Text></View>
           <View style={s.flexible}><Text numberOfLines={1} style={s.label}>{profile?.display_name || 'Mein Profil'}</Text><Text numberOfLines={1} style={s.small}>{email}</Text></View>
@@ -162,38 +167,38 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
     </View>}
     <View style={s.main}>
       {!!logoutError && <View style={s.field}><ErrorNotice text={logoutError} /></View>}
-      {!wide && <View style={s.mobileHeader}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Tageschat" disabled={busy} accessibilityState={{ disabled: busy, selected: pane === 'chat' }} onPress={() => setPane('chat')}
+      {!wide && !typing && <View style={s.mobileHeader}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Tageschat" disabled={busy} accessibilityState={{ disabled: busy, selected: pane === 'chat' }} onPress={() => openPane('chat')}
           onFocus={() => setFocusedControl('brand')} onBlur={() => setFocusedControl('')} style={[s.brandLink, focusedControl === 'brand' && s.focus]}><Brand /></Pressable>
         <View style={s.inline}>
-        <Button variant="ghost" icon="history" selected={pane === 'history'} label="Verlauf" disabled={busy} onPress={() => setPane('history')} />
-        <Button variant="ghost" icon="photo" iconOnly selected={pane === 'progress'} label="Fortschrittsfotos" disabled={busy} onPress={() => setPane('progress')} />
-        <Button variant="ghost" icon="user" iconOnly selected={pane === 'profile'} label="Profil" disabled={busy} onPress={() => setPane('profile')} />
+        <Button variant="ghost" icon="history" iconOnly={width < 390} selected={pane === 'history'} label="Verlauf" disabled={busy} onPress={() => openPane('history')} />
+        <Button variant="ghost" icon="photo" iconOnly selected={pane === 'progress'} label="Fortschrittsfotos" disabled={busy} onPress={() => openPane('progress')} />
+        <Button variant="ghost" icon="user" iconOnly selected={pane === 'profile'} label="Profil" disabled={busy} onPress={() => openPane('profile')} />
       </View></View>}
       {profileError ? <View style={s.pageScroll}><ErrorNotice text={profileError} /><Button label="Erneut laden" onPress={() => setRevision(n => n + 1)} />{!wide && <Button secondary label="Abmelden" onPress={() => void logout()} />}</View>
         : !profile || !date ? <View style={s.pageScroll}><Text style={s.subtitle}>Dein Tagebuch wird geladen …</Text></View>
-        : pane === 'profile' ? <ProfileForm userId={userId} profile={profile} email={email} onSaved={setProfile} onLogout={logout} setBusy={setBusy} onBack={() => setPane('chat')} />
-        : pane === 'progress' ? <ScrollView style={s.fill} contentContainerStyle={s.pageScroll} keyboardShouldPersistTaps="handled"><ProgressPhotos userId={userId} timeZone={profile.time_zone} onBusy={setBusy} /></ScrollView>
+        : pane === 'profile' ? <ProfileForm userId={userId} profile={profile} email={email} onSaved={setProfile} onLogout={logout} setBusy={setBusy} onBack={() => openPane('chat')} />
+        : pane === 'progress' ? <FormScrollView contentContainerStyle={s.pageScroll}><ProgressPhotos userId={userId} timeZone={profile.time_zone} onBusy={setBusy} /></FormScrollView>
         : pane === 'history' ? <ScrollView contentContainerStyle={s.pageScroll}><Text role="heading" aria-level={1} style={s.title}>Dein Verlauf</Text>{history}</ScrollView>
         : <>
-          <View style={[s.topBar, wide && s.topBarWide]}>
+          <View style={[s.topBar, wide && s.topBarWide, compactChat && s.topBarTyping]}>
             <View style={s.headerRow}><View style={s.dayHeading}>{wide && <Text style={s.eyebrow}>Dein Tag</Text>}
-              <Text role="heading" aria-level={1} accessibilityLabel={dateLabel(date, true)} style={[s.heading, wide && s.headingWide]}>{width < 360
+              <Text role="heading" aria-level={1} accessibilityLabel={dateLabel(date, true)} style={[s.heading, wide && s.headingWide, compactChat && s.headingTyping]}>{width < 360
                 ? new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`))
                 : dateLabel(date, true)}</Text></View>
-              <View style={[s.row, deletionStyles.dayActions]}>
+              {!typing && <View style={[s.row, deletionStyles.dayActions]}>
                 <Button secondary icon="left" iconOnly label="Vorheriger Tag" disabled={busy || date === '1900-01-01'} onPress={() => openDate(moveDate(date, -1))} />
                 <Button secondary label="Heute" selected={date === today} disabled={busy} onPress={() => openDate(today)} />
                 <Button secondary icon="right" iconOnly label="Nächster Tag" disabled={busy || date === '9999-12-31'} onPress={() => openDate(moveDate(date, 1))} />
                 <Button variant="ghost" icon="calendar" iconOnly label="Datum wählen" expanded={datePickerOpen} disabled={busy} onPress={() => setDatePickerOpen(value => !value)} />
-                <Button variant="ghost" label="Tageschat löschen" disabled={busy} onPress={() => { setDatePickerOpen(false); setDeleteOpen(true); }} />
-              </View>
+                <Button variant="ghost" icon="trash" iconOnly={!wide} label="Tageschat löschen" disabled={busy} onPress={() => { Keyboard.dismiss(); setDatePickerOpen(false); setDeleteOpen(true); }} />
+              </View>}
             </View>
             {datePickerOpen && <View style={s.field}><Text style={s.label}>Zu einem Datum springen</Text><View style={s.row}>
               <TextInput accessibilityLabel="Datum (JJJJ-MM-TT)" value={dateInput} onChangeText={setDateInput} editable={!busy} autoFocus maxLength={10} placeholder="JJJJ-MM-TT"
                 onFocus={() => setFocusedControl('date')} onBlur={() => setFocusedControl('')} style={[s.dateInput, focusedControl === 'date' && s.focus]} onSubmitEditing={() => openDate(dateInput)} />
               <Button label="Öffnen" disabled={busy} onPress={() => openDate(dateInput)} />
-              <Button variant="ghost" label="Schließen" disabled={busy} onPress={() => { setDatePickerOpen(false); setDateError(''); }} />
+              <Button variant="ghost" label="Schließen" disabled={busy} onPress={() => { Keyboard.dismiss(); setDatePickerOpen(false); setDateError(''); }} />
             </View><ErrorNotice text={dateError} /></View>}
             {deletedDate === date && <Text accessibilityLiveRegion="polite" style={s.success}>Tageschat gelöscht.</Text>}
           </View>
@@ -204,7 +209,7 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
             setDraft={value => drafts.setText(date, value)} photos={currentDraft.value.photos} setPhotos={value => drafts.setPhotos(date, value)}
             pending={currentDraft.value.pending} prepareSend={pending => drafts.prepareSend(date, pending)}
             completeSend={() => drafts.complete(date)} rejectSend={() => drafts.releaseSend(date)}
-            onTargets={() => setPane('profile')} setBusy={setBusy} onSaved={() => { setDeletedDate(''); void loadDays(); }} />
+            onTargets={() => openPane('profile')} setBusy={setBusy} onSaved={() => { setDeletedDate(''); void loadDays(); }} />
           {deleteOpen && <DayDelete key={date} userId={userId} date={date} hasDraft={!!currentDraft.value.text} hasPhotos={!!currentDraft.value.photos.length}
             initialRequest={currentDraft.value.deletion} prepareRequest={request => drafts.prepareDeletion(date, request)}
             releaseRequest={() => drafts.releaseDeletion(date)} onClose={() => setDeleteOpen(false)} onDeleted={deleted} onRefresh={refreshDay} />}
@@ -233,7 +238,7 @@ function ProfileForm({ userId, profile, email, onSaved, onLogout, setBusy, onBac
     catch (error) { setError(errorMessage(error)); }
     finally { setSaving(false); setBusy(false); }
   }
-  return <ScrollView contentContainerStyle={s.pageScroll} keyboardShouldPersistTaps="handled">
+  return <FormScrollView contentContainerStyle={s.pageScroll}>
     <Text style={s.eyebrow}>Ganz persönlich</Text><Text role="heading" aria-level={1} style={s.title}>Dein Profil</Text>
     <Text style={s.subtitle}>Deine Ziele und Vorlieben helfen Fitty, Antworten und Essensvorschläge auf deinen Alltag abzustimmen.</Text>
     <Text style={s.small}>{email}</Text>
@@ -247,5 +252,5 @@ function ProfileForm({ userId, profile, email, onSaved, onLogout, setBusy, onBac
     <TargetsForm userId={userId} timeZone={profile.time_zone} disabled={saving} onBusy={value => { setTargetsBusy(value); setBusy(value); }} />
     <Button secondary label="Zurück zum Tageschat" disabled={busy} onPress={onBack} />
     <Button secondary label="Abmelden" disabled={busy} onPress={() => void onLogout()} />
-  </ScrollView>;
+  </FormScrollView>;
 }

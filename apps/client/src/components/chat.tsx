@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { AppState, Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { AppState, Image, Keyboard, Platform, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { randomUUID } from 'expo-crypto';
 import { api, APIError, dateLabel, Entry, errorMessage, Message, MessagePage, Summary } from '../lib/chat-api';
 import { styles as s } from '../styles/app';
@@ -8,6 +8,7 @@ import { DaySummary } from './day-summary';
 import { DraftPhoto, discardPhoto, pastedPhotos, pickPhotos, uploadPhoto } from '../lib/photos';
 import { ChatPhoto } from './chat-photo';
 import { EntryEditor, EntryEditorMode } from './entry-editor';
+import { FormScrollView, useKeyboardVisible } from './keyboard-layout';
 
 import type { PendingMessage, StoredDraft } from '../lib/draft-store.types';
 const analysisErrors: Record<string, string> = {
@@ -38,6 +39,8 @@ export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhoto
   const { width, height } = useWindowDimensions();
   const wide = width >= 900;
   const compact = width < 500;
+  const keyboardVisible = useKeyboardVisible();
+  const compactComposer = !wide && (keyboardVisible || height < 650);
   const [messages, setMessages] = useState<Message[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [next, setNext] = useState<string | null>(null);
@@ -177,6 +180,7 @@ export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhoto
   }
   async function selectPhotos(camera: boolean) {
     if (externalBusy || sendLock.current || picking || editor || pending || photos.length >= 4) return;
+    Keyboard.dismiss();
     setPicking(true); setBusy(true); setSendError('');
     try { const selected = await pickPhotos(camera, 4 - photos.length); if (alive.current) setPhotos([...photos, ...selected]); else selected.forEach(discardPhoto); }
     catch (error) { if (alive.current) setSendError(errorMessage(error)); }
@@ -214,7 +218,7 @@ export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhoto
   }
   function openEditor(entry: Entry, mode: EntryEditorMode) {
     if (externalBusy || sendLock.current || picking || editor || pending || actionBusy || loading || loadError || summary?.pending_count) return;
-    setEditor({ entry: { ...entry }, mode }); setBusy(true);
+    Keyboard.dismiss(); setEditor({ entry: { ...entry }, mode }); setBusy(true);
   }
   function closeEditor() { setEditor(null); setBusy(false); }
   useEffect(() => {
@@ -227,8 +231,8 @@ export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhoto
     return () => element?.removeEventListener('keydown', onKey);
   });
 
-  return <KeyboardAvoidingView style={s.fill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-    <ScrollView ref={scroll} style={s.fill} contentContainerStyle={[s.messages, wide && s.messagesWide]} keyboardShouldPersistTaps="handled"
+  return <View style={s.fill}>
+    <ScrollView ref={scroll} style={s.fill} contentContainerStyle={[s.messages, wide && s.messagesWide]} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
       onContentSizeChange={() => { if (scrollToBottom.current && messages.length) { scroll.current?.scrollToEnd({ animated: false }); scrollToBottom.current = false; } }}>
       {summary && <DaySummary summary={summary} onTargets={externalBusy || sending || picking || editor ? undefined : onTargets} onCorrect={externalBusy || sending || picking || editor || pending ? undefined : correct}
         onEdit={externalBusy || sending || picking || editor || pending || actionBusy || loading || loadError || summary.pending_count ? undefined : entry => openEditor(entry, 'edit')}
@@ -261,10 +265,10 @@ export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhoto
         <Text style={s.small}>Du kannst weiterschreiben. Bei einer fehlgeschlagenen Nachricht bitte zuerst erneut auswerten oder ohne Auswertung fortfahren.</Text>
       </View>}
     </ScrollView>
-    <View style={s.composerFooter}><View style={[s.composerArea, wide && s.composerWide]}>
+    <FormScrollView style={s.composerFooter}><View style={[s.composerArea, wide && s.composerWide, compactComposer && s.composerAreaTyping]}>
       {draftNotice}
       <ErrorNotice text={sendError} />
-      {height >= 650 && <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.suggestions} keyboardShouldPersistTaps="handled">
+      {!compactComposer && height >= 650 && <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.suggestions} keyboardShouldPersistTaps="handled">
         {[
           { label: 'Mahlzeit', prompt: 'Ich habe gegessen: ' },
           { label: 'Bewegung', prompt: 'Meine Bewegung heute: ' },
@@ -272,14 +276,14 @@ export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhoto
         ].map(item => <Button key={item.label} variant="chip" icon="plus" label={item.label} disabled={externalBusy || sending || picking || !!editor || !!pending} onPress={() => appendDraft(item.prompt)} />)}
       </ScrollView>}
       <View style={[s.composer, inputFocused && s.composerFocused]}>
-        {!!photos.length && <ScrollView horizontal contentContainerStyle={s.photoStrip}>
+        {!!photos.length && <ScrollView horizontal contentContainerStyle={s.photoStrip} keyboardShouldPersistTaps="handled">
           {photos.map((photo, index) => <View key={photo.id} style={s.photoDraft} testID="draft-photo">
             <Image source={{ uri: photo.uri }} style={s.photoDraftPreview} accessibilityLabel={`Ausgewähltes Foto ${index + 1}`} />
             <Button variant="ghost" icon="close" iconOnly label="Entfernen" accessibilityLabel={`Foto ${index + 1} entfernen`} disabled={externalBusy || sending || picking || !!editor || !!pending} onPress={() => void removePhoto(photo)} />
           </View>)}
         </ScrollView>}
         <TextInput ref={input} accessibilityLabel="Nachricht" placeholder="Erzähl von deinem Tag …" placeholderTextColor="#687061" value={draft} onChangeText={setDraft}
-          onFocus={() => setInputFocused(true)} onBlur={() => setInputFocused(false)} editable={!externalBusy && !sending && !editor && !pending} multiline maxLength={8000} style={s.composerInput} />
+          onFocus={() => setInputFocused(true)} onBlur={() => setInputFocused(false)} editable={!externalBusy && !sending && !editor && !pending} multiline maxLength={8000} style={[s.composerInput, compactComposer && s.composerInputTyping]} />
         {picking && <Text accessibilityLiveRegion="polite" style={s.small}>Bilder werden vorbereitet …</Text>}
         {!!uploadStatus && <Text accessibilityLiveRegion="polite" style={s.small}>{uploadStatus}</Text>}
         <View style={s.composerBottom}>
@@ -294,10 +298,10 @@ export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhoto
           {compact && !!photos.length && <Text style={s.composerHint}>{photos.length}/4 Bilder</Text>}
           {!compact && Platform.OS === 'web' && <Text style={s.composerHint}>⌘ / Strg + Enter senden</Text>}</View>
       </View>
-      {(!compact || !!photos.length) && <Text style={s.composerHint}>{photos.length ? 'Ergänze z. B. „Mein Mittagessen“ oder „Was passt von dieser Karte?“. ' : 'Nährwerte können Schätzungen sein. Korrekturen einfach in den Chat schreiben.'}</Text>}
-    </View></View>
+      {!compactComposer && (!compact || !!photos.length) && <Text style={s.composerHint}>{photos.length ? 'Ergänze z. B. „Mein Mittagessen“ oder „Was passt von dieser Karte?“. ' : 'Nährwerte können Schätzungen sein. Korrekturen einfach in den Chat schreiben.'}</Text>}
+    </View></FormScrollView>
     {editor && <EntryEditor date={date} entry={editor.entry} mode={editor.mode} analysisBusy={!!summary?.pending_count}
       onClose={closeEditor} onRefresh={() => refresh.current()}
       onSaved={() => { closeEditor(); refresh.current(); onSaved(); }} />}
-  </KeyboardAvoidingView>;
+  </View>;
 }

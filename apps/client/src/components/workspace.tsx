@@ -107,7 +107,8 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
     finally { if (alive.current) setBusy(false); }
   }
   const hasDraft = !!(currentDraft.value.text || currentDraft.value.photos.length || currentDraft.value.pending);
-  const draftNotice = <ScrollView style={[draftStyles.notice, compactChat && draftStyles.noticeCompact]} contentContainerStyle={s.field} keyboardShouldPersistTaps="handled">
+  const canDiscardDraft = hasDraft && currentDraft.loaded && !currentDraft.value.pending && !currentDraft.value.deletion && !deleteOpen && !discardOpen;
+  const draftNotice = (!currentDraft.loaded || currentDraft.error || currentDraft.value.pending || discardOpen) ? <ScrollView style={[draftStyles.notice, compactChat && draftStyles.noticeCompact]} contentContainerStyle={s.field} keyboardShouldPersistTaps="handled">
     {!currentDraft.loaded ? <><Text style={s.small}>Entwurf wird geladen …</Text><ErrorNotice text={currentDraft.error} />
       {!!currentDraft.error && <Button secondary label="Entwurf erneut laden" onPress={() => void drafts.load(date)} />}</>
       : currentDraft.error ? <><ErrorNotice text={currentDraft.error} />
@@ -115,16 +116,12 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
           <View style={s.row}><Button secondary label="Gespeicherten Entwurf übernehmen" disabled={working} onPress={() => void drafts.reload(date)} />
             {!currentDraft.value.pending && !currentDraft.value.deletion && <Button secondary label="Meinen Entwurf speichern" disabled={working} onPress={() => void drafts.keepLocal(date)} />}</View></>
           : <Button secondary label="Entwurf erneut speichern" disabled={working} onPress={() => void drafts.flush(date).catch(() => {})} />}</>
-      : currentDraft.task || currentDraft.committing ? <Text style={s.small}>Entwurf wird auf diesem Gerät gespeichert …</Text>
-      : currentDraft.value.pending ? <Text style={s.small}>Dieser Sendevorgang ist noch offen. Mit „Erneut senden“ wird dieselbe Nachricht geprüft und gegebenenfalls gespeichert.</Text>
-      : hasDraft && <Text style={s.small}>Entwurf auf diesem Gerät gespeichert.</Text>}
-    {hasDraft && (!typing || discardOpen) && currentDraft.loaded && !currentDraft.value.pending && !currentDraft.value.deletion && !deleteOpen && <>
-      {discardOpen ? <><Text style={s.small}>Text und Fotoauswahl für diesen Tag auf diesem Gerät verwerfen?</Text><View style={s.row}>
+      : currentDraft.value.pending && <Text style={s.small}>Dieser Sendevorgang ist noch offen. Mit „Erneut senden“ wird dieselbe Nachricht geprüft und gegebenenfalls gespeichert.</Text>}
+    {discardOpen && <><Text style={s.small}>Text und Fotoauswahl für diesen Tag auf diesem Gerät verwerfen?</Text><View style={s.row}>
         <Button secondary label="Entwurf behalten" disabled={working} onPress={() => setDiscardOpen(false)} />
         <Button secondary label="Entwurf endgültig verwerfen" disabled={working || currentDraft.conflict} onPress={() => void discardDraft()} />
-      </View></> : <Button variant="ghost" label="Entwurf verwerfen" disabled={working} onPress={() => { Keyboard.dismiss(); setDiscardOpen(true); }} />}
-    </>}
-  </ScrollView>;
+    </View></>}
+  </ScrollView> : null;
   const today = profile ? todayIn(profile.time_zone) : '';
   const initials = (profile?.display_name || 'Fitty').split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase();
   const history = <>
@@ -205,6 +202,7 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
           <Chat key={`${date}:${chatRevision}`} userId={userId} date={date} timeZone={profile.time_zone} draft={currentDraft.value.text}
             externalBusy={deleteOpen || discardOpen || !currentDraft.loaded || !!currentDraft.value.deletion}
             sendBlocked={currentDraft.conflict || !!currentDraft.error} draftNotice={draftNotice}
+            onDiscardDraft={canDiscardDraft ? () => { Keyboard.dismiss(); setDiscardOpen(true); } : undefined}
             initialPendingPhotoDeletions={deletedDate === date ? pendingPhotoDeletions : 0}
             setDraft={value => drafts.setText(date, value)} photos={currentDraft.value.photos} setPhotos={value => drafts.setPhotos(date, value)}
             pending={currentDraft.value.pending} prepareSend={pending => drafts.prepareSend(date, pending)}

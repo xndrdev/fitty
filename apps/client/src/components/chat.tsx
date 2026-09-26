@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AppState, Image, Keyboard, Platform, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { randomUUID } from 'expo-crypto';
-import { api, APIError, dateLabel, Entry, errorMessage, Message, MessagePage, Summary } from '../lib/chat-api';
+import { api, APIError, Entry, errorMessage, Message, MessagePage, Summary } from '../lib/chat-api';
 import { styles as s } from '../styles/app';
 import { Button, ErrorNotice, FittyMark } from './ui';
 import { DaySummary } from './day-summary';
 import { DraftPhoto, discardPhoto, pastedPhotos, pickPhotos, uploadPhoto } from '../lib/photos';
 import { ChatPhoto } from './chat-photo';
 import { EntryEditor, EntryEditorMode } from './entry-editor';
-import { FormScrollView, useKeyboardVisible } from './keyboard-layout';
+import { FormScrollView, useKeyboardToolbar } from './keyboard-layout';
+import { ComposerActions, type ComposerAction } from './composer-actions';
 
 import type { PendingMessage, StoredDraft } from '../lib/draft-store.types';
 const analysisErrors: Record<string, string> = {
@@ -29,18 +30,16 @@ function mergeMessages(previous: Message[], incoming: Message[]) {
   return [...all.values()].sort((a, b) => BigInt(a.id) < BigInt(b.id) ? -1 : 1);
 }
 
-export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhotos, pending, prepareSend, completeSend, rejectSend, draftNotice, sendBlocked, setBusy, onSaved, onTargets, externalBusy = false, initialPendingPhotoDeletions = 0 }: {
+export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhotos, pending, prepareSend, completeSend, rejectSend, draftNotice, sendBlocked, setBusy, onSaved, onTargets, onDiscardDraft, externalBusy = false, initialPendingPhotoDeletions = 0 }: {
   userId: string; date: string; timeZone: string; draft: string; setDraft: (value: string) => void;
   photos: DraftPhoto[]; setPhotos: (value: DraftPhoto[]) => void;
   pending: PendingMessage | null; prepareSend: (pending: PendingMessage) => Promise<StoredDraft>; completeSend: () => Promise<void>; rejectSend: () => Promise<unknown>;
   draftNotice?: ReactNode; sendBlocked?: boolean; setBusy: (value: boolean) => void; onSaved: () => void; onTargets: () => void;
-  externalBusy?: boolean; initialPendingPhotoDeletions?: number;
+  externalBusy?: boolean; initialPendingPhotoDeletions?: number; onDiscardDraft?: () => void;
 }) {
-  const { width, height } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const wide = width >= 900;
-  const compact = width < 500;
-  const keyboardVisible = useKeyboardVisible();
-  const compactComposer = !wide && (keyboardVisible || height < 650);
+  useKeyboardToolbar(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [next, setNext] = useState<string | null>(null);
@@ -54,6 +53,7 @@ export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhoto
   const [actionBusy, setActionBusy] = useState('');
   const [revision, setRevision] = useState(0);
   const [inputFocused, setInputFocused] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
   const [editor, setEditor] = useState<{ entry: Entry; mode: EntryEditorMode } | null>(null);
   const scroll = useRef<ScrollView>(null);
   const input = useRef<TextInput>(null);
@@ -213,6 +213,12 @@ export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhoto
     if (value.length > 8000) { setSendError('Bitte kürze deinen Entwurf, bevor du etwas ergänzt.'); return; }
     setDraft(value); setSendError(''); setTimeout(() => input.current?.focus(), 0);
   }
+  function chooseAction(action: ComposerAction) {
+    if (!alive.current) return;
+    if (action === 'photos' || action === 'camera') { void selectPhotos(action === 'camera'); return; }
+    if (action === 'discard') { onDiscardDraft?.(); return; }
+    appendDraft({ meal: 'Ich habe gegessen: ', activity: 'Meine Bewegung heute: ', restaurant: 'Ich gehe heute ins Restaurant. Worauf sollte ich achten? ' }[action]);
+  }
   function correct(entry: Entry) {
     appendDraft(`Korrektur zu „${entry.label}“${entry.amount ? ` (${entry.amount})` : ''}: `);
   }
@@ -265,41 +271,29 @@ export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhoto
         <Text style={s.small}>Du kannst weiterschreiben. Bei einer fehlgeschlagenen Nachricht bitte zuerst erneut auswerten oder ohne Auswertung fortfahren.</Text>
       </View>}
     </ScrollView>
-    <FormScrollView style={s.composerFooter}><View style={[s.composerArea, wide && s.composerWide, compactComposer && s.composerAreaTyping]}>
+    <FormScrollView style={s.composerFooter} testID="chat-composer"><View style={[s.composerArea, wide && s.composerWide]}>
       {draftNotice}
       <ErrorNotice text={sendError} />
-      {!compactComposer && height >= 650 && <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.suggestions} keyboardShouldPersistTaps="handled">
-        {[
-          { label: 'Mahlzeit', prompt: 'Ich habe gegessen: ' },
-          { label: 'Bewegung', prompt: 'Meine Bewegung heute: ' },
-          { label: 'Restaurant', prompt: 'Ich gehe heute ins Restaurant. Worauf sollte ich achten? ' },
-        ].map(item => <Button key={item.label} variant="chip" icon="plus" label={item.label} disabled={externalBusy || sending || picking || !!editor || !!pending} onPress={() => appendDraft(item.prompt)} />)}
-      </ScrollView>}
-      <View style={[s.composer, inputFocused && s.composerFocused]}>
-        {!!photos.length && <ScrollView horizontal contentContainerStyle={s.photoStrip} keyboardShouldPersistTaps="handled">
+      {!!photos.length && <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photoStrip} keyboardShouldPersistTaps="handled">
           {photos.map((photo, index) => <View key={photo.id} style={s.photoDraft} testID="draft-photo">
             <Image source={{ uri: photo.uri }} style={s.photoDraftPreview} accessibilityLabel={`Ausgewähltes Foto ${index + 1}`} />
             <Button variant="ghost" icon="close" iconOnly label="Entfernen" accessibilityLabel={`Foto ${index + 1} entfernen`} disabled={externalBusy || sending || picking || !!editor || !!pending} onPress={() => void removePhoto(photo)} />
           </View>)}
-        </ScrollView>}
+      </ScrollView>}
+      {picking && <Text accessibilityLiveRegion="polite" style={s.small}>Bilder werden vorbereitet …</Text>}
+      {!!uploadStatus && <Text accessibilityLiveRegion="polite" style={s.small}>{uploadStatus}</Text>}
+      <View style={[s.composer, inputFocused && s.composerFocused]}>
+        <Button variant="ghost" icon="plus" iconOnly round label="Hinzufügen" accessibilityLabel="Nachricht ergänzen" expanded={actionsOpen}
+          disabled={externalBusy || sending || picking || !!editor || !!pending} onPress={() => { Keyboard.dismiss(); setActionsOpen(true); }} />
         <TextInput ref={input} accessibilityLabel="Nachricht" placeholder="Erzähl von deinem Tag …" placeholderTextColor="#687061" value={draft} onChangeText={setDraft}
-          onFocus={() => setInputFocused(true)} onBlur={() => setInputFocused(false)} editable={!externalBusy && !sending && !editor && !pending} multiline maxLength={8000} style={[s.composerInput, compactComposer && s.composerInputTyping]} />
-        {picking && <Text accessibilityLiveRegion="polite" style={s.small}>Bilder werden vorbereitet …</Text>}
-        {!!uploadStatus && <Text accessibilityLiveRegion="polite" style={s.small}>{uploadStatus}</Text>}
-        <View style={s.composerBottom}>
-          <View style={s.inline}>{summary?.photos_enabled && <>
-            <Button variant="ghost" icon="photo" iconOnly={compact} label="Fotos" accessibilityLabel="Fotos auswählen" disabled={externalBusy || sending || picking || !!editor || !!pending || photos.length >= 4} onPress={() => void selectPhotos(false)} />
-            <Button variant="ghost" icon="camera" iconOnly={compact} label="Kamera" accessibilityLabel="Foto aufnehmen" disabled={externalBusy || sending || picking || !!editor || !!pending || photos.length >= 4} onPress={() => void selectPhotos(true)} />
-            {!compact && !!photos.length && <Text style={s.composerHint}>{photos.length}/4 Bilder</Text>}
-          </>}</View>
-          <Button icon={pending || sending ? undefined : 'send'} label={sending ? 'Speichern …' : pending ? 'Erneut senden' : 'Senden'} disabled={externalBusy || sendBlocked || sending || picking || !!editor || (!draft.trim() && !photos.length) || loading || !!loadError} onPress={() => void send()} />
-        </View>
-        <View style={s.between}><Text style={s.composerHint}>Für den {dateLabel(date)} · {draft.length.toLocaleString('de-DE')}/8.000</Text>
-          {compact && !!photos.length && <Text style={s.composerHint}>{photos.length}/4 Bilder</Text>}
-          {!compact && Platform.OS === 'web' && <Text style={s.composerHint}>⌘ / Strg + Enter senden</Text>}</View>
+          onFocus={() => setInputFocused(true)} onBlur={() => setInputFocused(false)} editable={!externalBusy && !sending && !editor && !pending} multiline {...(Platform.OS === 'web' ? { rows: 1 } : {})} maxLength={8000} style={s.composerInput} />
+        <Button icon={pending ? 'history' : 'send'} iconOnly round loading={sending} label={sending ? 'Speichern …' : pending ? 'Erneut senden' : 'Senden'}
+          disabled={externalBusy || sendBlocked || sending || picking || !!editor || (!draft.trim() && !photos.length) || loading || !!loadError} onPress={() => void send()} />
       </View>
-      {!compactComposer && (!compact || !!photos.length) && <Text style={s.composerHint}>{photos.length ? 'Ergänze z. B. „Mein Mittagessen“ oder „Was passt von dieser Karte?“. ' : 'Nährwerte können Schätzungen sein. Korrekturen einfach in den Chat schreiben.'}</Text>}
+      {draft.length >= 7800 && <Text accessibilityLiveRegion="polite" style={s.small}>{(8000 - draft.length).toLocaleString('de-DE')} Zeichen übrig</Text>}
     </View></FormScrollView>
+    <ComposerActions visible={actionsOpen} photosEnabled={!!summary?.photos_enabled} photoLimitReached={photos.length >= 4} canDiscard={!!onDiscardDraft}
+      onClose={() => setActionsOpen(false)} onAction={chooseAction} />
     {editor && <EntryEditor date={date} entry={editor.entry} mode={editor.mode} analysisBusy={!!summary?.pending_count}
       onClose={closeEditor} onRefresh={() => refresh.current()}
       onSaved={() => { closeEditor(); refresh.current(); onSaved(); }} />}

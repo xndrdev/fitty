@@ -63,6 +63,18 @@ for (const platform of ['ios', 'android']) test(`${platform}: numeric keyboards 
   app.unmount(); assert.equal(app.listeners.size, 0);
 });
 
+test('chat can hide the toolbar while forms retain numeric keyboard dismissal', () => {
+  const app = harness('ios'), props = { children: 'chat' };
+  const screen = app.render('KeyboardScreen', props);
+  const setToolbar = screen.props.children.props.children.props.children[0].props.children.props.value;
+  setToolbar(false);
+  app.emit('keyboardWillShow');
+  assert.equal(app.render('KeyboardScreen', props).props.children.props.children.props.children[1], false);
+  setToolbar(true);
+  assert.equal(app.render('KeyboardScreen', props).props.children.props.children.props.children[1].type, 'View');
+  app.unmount();
+});
+
 test('native forms reveal the focused field above fixed actions without scrolling visible fields', () => {
   const app = harness('ios'), positions = [];
   const scrollRef = { current: { getNativeScrollRef: () => ({ measureInWindow: callback => callback(0, 100, 390, 300) }), scrollTo: ({ y }) => positions.push(y) } };

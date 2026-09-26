@@ -5,12 +5,18 @@ import { styles as s } from '../styles/app';
 import { Button } from './ui';
 
 const KeyboardVisible = createContext(false);
+const KeyboardToolbar = createContext<(visible: boolean) => void>(() => {});
 export const useKeyboardVisible = () => useContext(KeyboardVisible);
+export function useKeyboardToolbar(visible: boolean) {
+  const setToolbar = useContext(KeyboardToolbar);
+  useEffect(() => { setToolbar(visible); return () => setToolbar(true); }, [visible, setToolbar]);
+}
 
 // Keep avoidance at the screen origin, outside headers and safe-area padding.
 // Modal screens need their own instance because they use a separate native window.
 export function KeyboardScreen({ children, modal = false }: { children: ReactNode; modal?: boolean }) {
   const [visible, setVisible] = useState(() => Platform.OS !== 'web' && Keyboard.isVisible());
+  const [toolbar, setToolbar] = useState(true);
   useEffect(() => {
     if (Platform.OS === 'web') return;
     const show = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setVisible(true));
@@ -21,8 +27,8 @@ export function KeyboardScreen({ children, modal = false }: { children: ReactNod
   return <KeyboardVisible.Provider value={visible}>
     <KeyboardAvoidingView style={[s.screen, modal && s.modalBackdrop]} enabled={Platform.OS !== 'web'} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <SafeAreaView style={s.fill} edges={visible ? ['top', 'left', 'right'] : ['top', 'bottom', 'left', 'right']}>
-        <View style={s.fill}>{children}</View>
-        {visible && <View style={s.keyboardToolbar}>
+        <View style={s.fill}><KeyboardToolbar.Provider value={setToolbar}>{children}</KeyboardToolbar.Provider></View>
+        {visible && toolbar && <View style={s.keyboardToolbar}>
           <Button variant="ghost" label="Fertig" accessibilityLabel="Tastatur schließen" onPress={Keyboard.dismiss} />
         </View>}
       </SafeAreaView>

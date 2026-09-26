@@ -62,7 +62,7 @@ Interface: **http://localhost:8788**. Sign in using the credentials from `.local
 | `npm run test:tracking` | Test tracking workers with controlled responses against PostgreSQL |
 | `npm run test:targets` | Test optional targets, decimal input, and progress calculations |
 | `npm run test:progress-photos` | Test calendar dates and merging paginated photo histories |
-| `npm run test:keyboard` | Test keyboard dismissal, focused-field scrolling, and native/web separation |
+| `npm run test:keyboard` | Test keyboard dismissal, focused-field scrolling, and composer menu lifecycle |
 
 After an intentional `db:reset`, rerun setup to recreate the local account. Do not use a reset for normal updates.
 
@@ -378,6 +378,16 @@ Verification:
 Follow-up after iPhone feedback: the first revision collapsed the chat composer and entry editor's scrollable content on native devices. The shared form wrapper inherited `flex: 1`; combining it with `flexGrow: 0` and `flexBasis: 'auto'` still gives a zero basis in native Yoga. The wrapper now uses explicit grow/shrink properties without the shorthand. A reproduction compiled against the Yoga source shipped with this project's React Native version measured the old chat composer at 1 point (its border) and the editor content at 0. The corrected cases measured 241 and 250 points; oversized chat content also shrank correctly to a 200-point viewport. The reproduction is saved in `.local/ux-review/native-layout-repro.cpp`. This regression was not detected by the earlier browser or mocked keyboard tests.
 
 Physical-device acceptance remains open: reload the project in Expo Go, type a multiline chat message, edit a numeric daily target, and edit an entry near the bottom of its form. Check that the input, “Fertig”, and send/save actions stay reachable with the iPhone keyboard open; repeat with photos attached, in landscape, and after closing/reopening the keyboard. Browser viewport resizing, the Yoga reproduction, and controlled event tests do not reproduce the native keyboard animation, safe-area geometry, or interactive dismissal.
+
+### Compact chat composer, September 26, 2026
+
+The chat now uses one rounded row with a plus button, multiline message input, and an accessible send icon. The plus button opens an overlay containing photo selection, camera capture, meal/activity/restaurant prompts, and draft discard when available. Selecting a prompt preserves existing text and returns focus to the input. On iOS, actions wait for the native modal's dismissal before opening another picker or focusing the input.
+
+Normal autosave notices, persistent suggestion buttons, the date/character-count footer, and the chat's keyboard toolbar no longer take up space. Storage errors, conflicts, uncertain sends, upload progress, and discard confirmation remain visible. Character counts appear near the limit. Profile/login/editor forms retain their keyboard dismissal button. Existing photo previews and removal controls appear only when photos are attached.
+
+`npm run check`, web export, and iOS JavaScript/Hermes export passed. Five keyboard tests and six menu lifecycle tests cover toolbar restoration and deferred actions without duplicate execution. A Chromium run with isolated Auth/API fixtures passed 39 checks, including all prompt actions, preserved drafts, Escape/backdrop dismissal, discard cancellation/confirmation, photo selection through the overlay, the four-photo limit, photo removal, sending, and existing form flows. The normal composer measured 68 pixels high at widths of 320, 390, and 430 pixels, and 78 pixels on desktop. There were no uncaught browser errors.
+
+A separate native Yoga fixture passed 12 geometry cases with narrow screens, multiline-sized input, photos, and restricted available height. It retains the explicit grow/shrink fix described above; this fixture models layout geometry rather than native TextInput measurement or keyboard interaction. Local screenshots, the browser script/results, and the native fixture are in `.local/minimal-composer-review/`. Physical iPhone verification of the new menu, picker transitions, and keyboard remains pending.
 
 ### Verification limits
 

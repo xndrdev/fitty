@@ -14,6 +14,9 @@ const paths = {
   close: 'M6 6l12 12 M18 6 6 18',
   plus: 'M12 5v14 M5 12h14',
   trash: 'M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7',
+  meal: 'M3 12h18 M4 12a8 8 0 0 0 16 0 M8 5v3 M12 3v5 M16 5v3',
+  activity: 'M3 12h4l3-8 4 16 3-8h4',
+  restaurant: 'M5 3v6a3 3 0 0 0 6 0V3 M8 3v18 M16 3v9h4 M20 3v18',
 };
 export type IconName = keyof typeof paths;
 

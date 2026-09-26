@@ -1,17 +1,17 @@
 import { useState, type ComponentPropsWithRef } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 import { styles as s } from '../styles/app';
 import { Icon, IconName } from './icon';
 
-export function Button({ label, onPress, disabled, secondary, selected, accessibilityLabel, icon, iconOnly, variant, expanded }: {
+export function Button({ label, onPress, disabled, secondary, selected, accessibilityLabel, icon, iconOnly, variant, expanded, round, loading }: {
   label: string; onPress: () => void; disabled?: boolean; secondary?: boolean; selected?: boolean; accessibilityLabel?: string;
-  icon?: IconName; iconOnly?: boolean; variant?: 'ghost' | 'chip'; expanded?: boolean;
+  icon?: IconName; iconOnly?: boolean; variant?: 'ghost' | 'chip'; expanded?: boolean; round?: boolean; loading?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
   const light = secondary || !!variant;
-  return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} accessibilityState={{ disabled: !!disabled, ...(selected !== undefined ? { selected } : {}), ...(expanded !== undefined ? { expanded } : {}) }}
-    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} disabled={disabled} onPress={onPress} style={({ pressed }) => [s.button, light && s.buttonSecondary, variant === 'ghost' && s.buttonGhost, variant === 'chip' && s.buttonChip, selected && s.buttonSelected, iconOnly && s.buttonIcon, disabled && s.disabled, pressed && s.pressed, focused && s.focus]}>
-    {icon && <Icon name={icon} color={light ? '#2F5D3A' : '#FFFFFF'} />}
+  return <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? label} accessibilityState={{ disabled: !!disabled, ...(loading ? { busy: true } : {}), ...(selected !== undefined ? { selected } : {}), ...(expanded !== undefined ? { expanded } : {}) }}
+    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} disabled={disabled} onPress={onPress} style={({ pressed }) => [s.button, light && s.buttonSecondary, variant === 'ghost' && s.buttonGhost, variant === 'chip' && s.buttonChip, selected && s.buttonSelected, iconOnly && s.buttonIcon, round && s.buttonRound, disabled && s.disabled, pressed && s.pressed, focused && s.focus]}>
+    {loading ? <ActivityIndicator size="small" color={light ? '#2F5D3A' : '#FFFFFF'} /> : icon && <Icon name={icon} color={light ? '#2F5D3A' : '#FFFFFF'} />}
     {!iconOnly && <Text style={[s.buttonText, light && s.buttonSecondaryText, variant === 'chip' && s.chipText]}>{label}</Text>}
   </Pressable>;
 }

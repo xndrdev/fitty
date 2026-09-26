@@ -13,6 +13,9 @@ export const styles = StyleSheet.create({
   modalBackdrop: { backgroundColor: '#14251CB8' },
   keyboardToolbar: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 12, backgroundColor: paper, borderTopWidth: 1, borderColor: border },
   fill: { flex: 1, minHeight: 0 },
+  // A content-sized ScrollView may override grow to 0. Native Yoga would
+  // still derive a zero basis from flex: 1, even with flexBasis: 'auto'.
+  formScroll: { flexGrow: 1, flexShrink: 1, minHeight: 0 },
   flexible: { flex: 1, minWidth: 0 },
   fontLoading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: paper },
   loginScroll: { flexGrow: 1, justifyContent: 'center', padding: 24 },

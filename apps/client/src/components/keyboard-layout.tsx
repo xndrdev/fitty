@@ -62,7 +62,7 @@ export function FormScrollView({ scrollRef, children, onScroll, onLayout, onFocu
     return () => { shown.remove(); if (frame.current !== null) cancelAnimationFrame(frame.current); };
   }, []);
 
-  return <ScrollView {...props} ref={scroll} style={[s.fill, style]} keyboardShouldPersistTaps="handled"
+  return <ScrollView {...props} ref={scroll} style={[s.formScroll, style]} keyboardShouldPersistTaps="handled"
     keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'} scrollEventThrottle={16}
     onFocus={event => {
       focusedWithin.current = true;

@@ -29,7 +29,7 @@
     "test:local": "node scripts/test-local.mjs",
     "test:tracking": "node scripts/test-tracking.mjs",
     "test:photos": "node scripts/test-photos.mjs",
-    "test:drafts": "node apps/client/src/lib/draft-store.test.cjs",
+    "test:drafts": "node apps/client/src/lib/draft-store.test.cjs && node apps/client/src/hooks/use-drafts.test.cjs",
     "test:targets": "node apps/client/src/lib/targets.test.cjs",
     "test:progress-photos": "node apps/client/src/lib/progress-photos.test.cjs"
   },

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 import { listDrafts, readDraft, releasePhotos, writeDraft } from '../lib/draft-store';
 import { DraftConflictError, type DraftInfo, type DraftValue, type PendingDayDeletion, type PendingMessage, type StoredDraft } from '../lib/draft-store.types';
 import type { DraftPhoto } from '../lib/photos';
@@ -142,10 +143,10 @@ export function useDrafts(userId: string) {
     const beforeUnload = (event: BeforeUnloadEvent) => {
       if ([...days.current.values()].some(item => item.edits !== item.saved || item.task || item.committing)) { event.preventDefault(); event.returnValue = ''; }
     };
-    if (typeof window !== 'undefined') window.addEventListener('beforeunload', beforeUnload);
+    if (Platform.OS === 'web' && typeof window !== 'undefined') window.addEventListener('beforeunload', beforeUnload);
     return () => {
       active.current = false; clearInterval(timer);
-      if (typeof window !== 'undefined') window.removeEventListener('beforeunload', beforeUnload);
+      if (Platform.OS === 'web' && typeof window !== 'undefined') window.removeEventListener('beforeunload', beforeUnload);
       void Promise.allSettled([...days.current.values()].flatMap(item => [item.task, item.committing, item.loading].filter(Boolean))).then(() => {
         if (!active.current) { releasePhotos([...resources.current.values()]); resources.current.clear(); }
       });

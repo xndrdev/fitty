@@ -69,6 +69,7 @@ The following tables are implemented through migrations. Food and activities use
 | `messages` | Day, role, text, client-generated message ID, and processing status |
 | `attachments` | User, date, optional message, position, Storage path, SHA-256, media type, size, dimensions, and upload status |
 | `tracking_entries` | Food/activity type, day, label, quantity, energy, macronutrients or duration/distance, data source, and source message |
+| `food_favorites` | Per-account food snapshots, keyed by the original entry ID, independent of daily chats |
 | `analysis_jobs` | Message, processing status, attempts, lease, and model |
 | `entry_changes` | Change with before/after values, source message, and evidence text |
 | `manual_entry_changes` | Direct change with user, request ID, expected version, and before/after values |
@@ -90,6 +91,14 @@ Key rules:
 - Results and images remain available when the OpenAI API is temporarily unreachable.
 
 Direct changes use the same domain value ranges as the AI. Entry versions prevent overwriting newer values; request IDs make retries idempotent. The mutation and its manual audit record are saved together. Direct editing waits while AI analyses are pending; claiming new worker jobs and direct changes coordinate through a short shared advisory lock. No model call is made for this. Deleting an entry sets `deleted_at`, immediately excluding it from active totals. Historical chats, photos, and change logs remain; this differs from full chat deletion.
+
+## Favorite meals
+
+Favorites store a snapshot of a food entry's label, portion, nutritional values, notes, and source. `GET /v1/favorites` returns the current account's favorites. `PUT /v1/favorites/{entry_id}` accepts the displayed `entry_version` and copies only a live, owned food entry with that version. A repeated save returns the existing snapshot, including after source changes or deletion. `DELETE /v1/favorites/{entry_id}` removes only that account's bookmark and is idempotent. Activities cannot be bookmarked.
+
+The table references the Auth account, with no foreign key to the original entry or day. Deleting a daily chat therefore leaves saved favorites intact; deleting the account removes them. Saves lock the profile row to enforce the 200-favorite limit under concurrency. Saving/removing favorites changes neither tracking entries nor daily totals and creates no AI jobs.
+
+The client suggests up to five matching meal names at the text caret after at least two characters, ignoring case and accents. Selecting one replaces the matching phrase while preserving surrounding text and attached photos. The plus menu also lists favorites and permits removal. Selection inserts an editable text description of the saved portion, values, source, and notes; it never submits automatically. Sending follows the existing durable message and AI processing flow, so a favorite is not a direct or guaranteed exact ledger insertion. Editing the original meal does not silently update its saved snapshot; remove and save again to update it.
 
 ## Personal daily targets
 

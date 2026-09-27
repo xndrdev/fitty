@@ -300,12 +300,13 @@ npm run check
 npm run test:local
 npm run test:photos
 npm run test:tracking
+npm run test:favorites:integration
 npm run build:web
 npm run bundle:ios
 npm run db:lint
 ```
 
-`check` runs TypeScript checks, native draft storage tests with controlled adapters, target validation/progress tests, photo capture date and pagination tests, Go tests, and `go vet`. Go unit tests cover token validation, calendar dates, time zones and target values, CORS, Responses requests, strict JSON decoding, and domain-level AI validation. `test:local` checks Auth configuration, profiles, user boundaries, persistence, concurrent retries, and both history pagination flows. It uses two temporary accounts and removes them together with dependent data afterward. New messages in this test are explicitly sent with `analyze:false`.
+`check` runs TypeScript checks, native draft storage tests with controlled adapters, target validation/progress tests, photo capture date and pagination tests, keyboard and modal lifecycle tests, favorite completion tests, Go tests, and `go vet`. Go unit tests cover token validation, calendar dates, time zones and target values, CORS, Responses requests, strict JSON decoding, and domain-level AI validation. `test:local` checks Auth configuration, profiles, user boundaries, persistence, concurrent retries, and both history pagination flows. It uses two temporary accounts and removes them together with dependent data afterward. New messages in this test are explicitly sent with `analyze:false`.
 
 `test:photos` checks private storage against real local Supabase Storage, format preparation, signed retrieval, user/day assignment, image-only messages, retries, and removal. Messages explicitly carry `analyze:false`. Temporary Storage objects and accounts are removed afterward; orphaned metadata is cleaned up by the regular worker no later than the next API startup.
 
@@ -389,6 +390,18 @@ Normal autosave notices, persistent suggestion buttons, the date/character-count
 
 A separate native Yoga fixture passed 12 geometry cases with narrow screens, multiline-sized input, photos, and restricted available height. It retains the explicit grow/shrink fix described above; this fixture models layout geometry rather than native TextInput measurement or keyboard interaction. Local screenshots, the browser script/results, and the native fixture are in `.local/minimal-composer-review/`. Physical iPhone verification of the new menu, picker transitions, and keyboard remains pending.
 
+### Favorite meals and compact navigation, September 27, 2026
+
+The mobile header is now one row containing a hamburger button and the selected day or section title. Its menu provides the daily chat, history, profile, progress photos, previous/next/today navigation, date selection, chat deletion, and logout. Date input appears only when requested. The desktop sidebar remains available. Menu actions on iOS and web wait for modal dismissal before moving focus or opening another dialog; Android uses the visibility transition because it does not provide the native dismissal callback.
+
+Expand the daily card's entries and use the star on a food entry to save its displayed portion. At least two matching characters in the composer reveal a compact, horizontally scrolling row of up to five favorites. Choosing a suggestion completes the phrase at the caret; text before and after it and attached photos remain intact. The caret moves directly after the inserted portion. The plus menu also opens the favorites list for selection or removal. Insertion never sends automatically, and estimates remain identified as estimates in the editable message. Normal AI processing starts only after sending; exact ledger reuse is not guaranteed. The saved snapshot does not change when the source entry is edited; remove and save again to update it.
+
+Favorites belong to the account and survive deletion of their source day. The account-level client model survives navigation between dates, including an in-flight save. Migration `20260926190000_food_favorites.sql` adds the snapshot table. Apply it with `npm run db:migrate`, then restart the API. The migration has been applied locally and the updated API started. `npm run test:favorites:integration` creates two temporary accounts, checks PostgreSQL persistence, account boundaries, stale versions, snapshot provenance, source/day deletion, unchanged totals, repeated operations, and concurrent saves at the 200-favorite limit. It creates no AI jobs or Storage objects, can run with the API active, and removes the temporary accounts afterward.
+
+TypeScript, unit tests, Go tests, `go vet`, PostgreSQL favorite integration, and schema lint passed. Web and iOS JavaScript/Hermes exports passed. Chromium with isolated Auth/API fixtures passed 51 checks at widths of 320, 390, 430, and 1280 pixels and heights down to 320 pixels. These cover menu/date navigation, retained daily drafts, favorite conflict recovery, reload and removal, a delayed removal across a day change, autocomplete inside existing text, caret placement, no automatic sending, photo selection, and existing profile/target/editor flows. The mobile header measured 57 pixels and the normal composer 68 pixels; no uncaught browser errors occurred. Programmatic scroll events now retain input focus on web, while native drag-to-dismiss behavior remains enabled.
+
+A native Yoga model passed 12 geometry cases, including suggestions, photos, multiline input, and constrained height. Browser screenshots/results and layout artifacts are stored locally in `.local/favorites-header-review/`. These tests do not replace physical iPhone acceptance of keyboard animations, caret placement, or modal transitions.
+
 ### Verification limits
 
 - Full physical iPhone acceptance, a standalone native build, and Coolify hosting remain pending.
@@ -398,6 +411,8 @@ A separate native Yoga fixture passed 12 geometry cases with narrow screens, mul
 
 ## References
 
+- [React Native 0.86: TextInput](https://reactnative.dev/docs/0.86/textinput)
+- [React Native 0.86: Modal](https://reactnative.dev/docs/0.86/modal)
 - [React Native 0.86: KeyboardAvoidingView](https://reactnative.dev/docs/0.86/keyboardavoidingview)
 - [React Native 0.86: ScrollView](https://reactnative.dev/docs/0.86/scrollview)
 - [React Native 0.86: Keyboard](https://reactnative.dev/docs/0.86/keyboard)

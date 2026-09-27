@@ -5,7 +5,7 @@ import { Icon, type IconName } from './icon';
 import { Button } from './ui';
 import { styles as s } from '../styles/composer-actions';
 
-export type ComposerAction = 'meal' | 'activity' | 'restaurant' | 'photos' | 'camera' | 'discard';
+export type ComposerAction = 'meal' | 'activity' | 'restaurant' | 'photos' | 'camera' | 'discard' | 'favorites';
 
 function Action({ label, icon, disabled, onPress }: { label: string; icon: IconName; disabled?: boolean; onPress: () => void }) {
   const [focused, setFocused] = useState(false);
@@ -26,9 +26,9 @@ export function ComposerActions({ visible, photosEnabled, photoLimitReached, can
     selected.current = null;
     if (action) onAction(action);
   }
-  // iOS must finish dismissing its modal before focusing the input or opening
-  // the system photo picker. Web/Android do not provide that dismissal event.
-  useEffect(() => { if (!visible && Platform.OS !== 'ios') runAction(); }, [visible]);
+  // iOS and web must finish dismissing their modal before focusing another
+  // input or opening another modal. Android has no onDismiss callback.
+  useEffect(() => { if (!visible && Platform.OS === 'android') runAction(); }, [visible]);
   function choose(action: ComposerAction) { selected.current = action; onClose(); }
 
   return <Modal visible={visible} transparent animationType="none" onRequestClose={onClose} onDismiss={runAction} accessibilityLabel="Nachricht ergänzen">
@@ -45,6 +45,7 @@ export function ComposerActions({ visible, photosEnabled, photoLimitReached, can
               <View style={s.photoAction}><Action label="Kamera" icon="camera" disabled={photoLimitReached} onPress={() => choose('camera')} /></View>
             </View>}
             {photosEnabled && photoLimitReached && <Text style={s.hint}>Höchstens vier Fotos pro Nachricht.</Text>}
+            <Action label="Favoriten" icon="star" onPress={() => choose('favorites')} />
             <Action label="Mahlzeit" icon="meal" onPress={() => choose('meal')} />
             <Action label="Bewegung" icon="activity" onPress={() => choose('activity')} />
             <Action label="Restaurant" icon="restaurant" onPress={() => choose('restaurant')} />

@@ -69,7 +69,7 @@ export function FormScrollView({ scrollRef, children, onScroll, onLayout, onFocu
   }, []);
 
   return <ScrollView {...props} ref={scroll} style={[s.formScroll, style]} keyboardShouldPersistTaps="handled"
-    keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'} scrollEventThrottle={16}
+    keyboardDismissMode={Platform.OS === 'web' ? 'none' : Platform.OS === 'ios' ? 'interactive' : 'on-drag'} scrollEventThrottle={16}
     onFocus={event => {
       focusedWithin.current = true;
       if (Platform.OS === 'web') (event.target as unknown as HTMLElement).scrollIntoView({ block: 'nearest' });

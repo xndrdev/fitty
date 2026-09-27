@@ -4,7 +4,7 @@ Fitty is being built as a private fitness companion for iOS and the web: one cha
 
 ## Project status
 
-As of September 17, 2026, login, profiles, daily chats, and text and photo tracking are available:
+As of September 27, 2026, login, profiles, daily chats, and text and photo tracking are available:
 
 - Private email/password login with Supabase Auth and persistent sessions.
 - Daily chat with free text input, date navigation, and paginated history.
@@ -12,7 +12,8 @@ As of September 17, 2026, login, profiles, daily chats, and text and photo track
 - Messages and profiles are stored in PostgreSQL through Go and restored after reloading or signing in again.
 - Profiles with a name, time zone, goals, and dietary preferences.
 - Optional calorie and macronutrient targets with progress indicators; past days retain their historical targets, which also provide daily context for the AI.
-- Responsive desktop and mobile interface; a shared Expo codebase for iOS and the web.
+- Responsive desktop and mobile interface; a shared Expo codebase for iOS and the web. Mobile navigation uses a compact header with a hamburger menu; chat additions sit behind a single plus button.
+- Personal favorite meals with saved portions and nutritional values: star a food entry, then select a matching suggestion while typing or open favorites through the plus menu.
 - AI responses, food and activity entries, corrections through chat, and daily totals from the database.
 - Direct editing and removal of entries from the daily overview, with protection against stale changes and repeated requests.
 - Deletion of entire daily chats after confirmation, including entries, change histories, and private photos.
@@ -107,10 +108,13 @@ npm run check
 npm run test:local
 npm run test:photos
 npm run test:tracking
+npm run test:favorites:integration
 npm run build:web
 npm run bundle:ios
 npm run db:lint
 ```
+
+`test:favorites:integration` checks account isolation, saved portions, deletion survival, and concurrent bookmark changes against local PostgreSQL. It uses temporary accounts, makes no model calls, and can run while the API is active.
 
 `test:tracking` tests the workers without model calls; stop the running Go server first. `test:local` and `test:photos` require Supabase and the Go API to be running and explicitly save without AI analysis. They use temporary accounts and remove their test data afterward. `bundle:ios` creates a JavaScript/Hermes bundle, not a signed, installable app.
 

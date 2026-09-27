@@ -10,6 +10,9 @@ import { ChatPhoto } from './chat-photo';
 import { EntryEditor, EntryEditorMode } from './entry-editor';
 import { FormScrollView, useKeyboardToolbar } from './keyboard-layout';
 import { ComposerActions, type ComposerAction } from './composer-actions';
+import type { useFavorites } from '../hooks/use-favorites';
+import { favoriteMatches, insertFavorite, type Favorite, type FavoriteMatch } from '../lib/favorites';
+import { FavoriteSuggestions, FavoritesSheet } from './favorites';
 
 import type { PendingMessage, StoredDraft } from '../lib/draft-store.types';
 const analysisErrors: Record<string, string> = {
@@ -30,11 +33,12 @@ function mergeMessages(previous: Message[], incoming: Message[]) {
   return [...all.values()].sort((a, b) => BigInt(a.id) < BigInt(b.id) ? -1 : 1);
 }
 
-export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhotos, pending, prepareSend, completeSend, rejectSend, draftNotice, sendBlocked, setBusy, onSaved, onTargets, onDiscardDraft, externalBusy = false, initialPendingPhotoDeletions = 0 }: {
+export function Chat({ favorites, userId, date, timeZone, draft, setDraft, photos, setPhotos, pending, prepareSend, completeSend, rejectSend, draftNotice, sendBlocked, setBusy, onSaved, onTargets, onDiscardDraft, externalBusy = false, initialPendingPhotoDeletions = 0 }: {
   userId: string; date: string; timeZone: string; draft: string; setDraft: (value: string) => void;
   photos: DraftPhoto[]; setPhotos: (value: DraftPhoto[]) => void;
   pending: PendingMessage | null; prepareSend: (pending: PendingMessage) => Promise<StoredDraft>; completeSend: () => Promise<void>; rejectSend: () => Promise<unknown>;
   draftNotice?: ReactNode; sendBlocked?: boolean; setBusy: (value: boolean) => void; onSaved: () => void; onTargets: () => void;
+  favorites: ReturnType<typeof useFavorites>;
   externalBusy?: boolean; initialPendingPhotoDeletions?: number; onDiscardDraft?: () => void;
 }) {
   const { width } = useWindowDimensions();
@@ -54,6 +58,9 @@ export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhoto
   const [revision, setRevision] = useState(0);
   const [inputFocused, setInputFocused] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const [selection, setSelection] = useState({ start: draft.length, end: draft.length });
+  const [completion, setCompletion] = useState<{ text: string; caret: number } | null>(null);
   const [editor, setEditor] = useState<{ entry: Entry; mode: EntryEditorMode } | null>(null);
   const scroll = useRef<ScrollView>(null);
   const input = useRef<TextInput>(null);
@@ -67,6 +74,18 @@ export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhoto
   const dayIdentity = useRef<string | null | undefined>(undefined);
   const dayGeneration = useRef(0);
   const requestGeneration = useRef(0);
+
+  useEffect(() => {
+    if (!completion || draft !== completion.text) return;
+    // Focus after the suggestion has unmounted, then put the caret immediately
+    // after the inserted portion so existing trailing text stays editable.
+    input.current?.focus();
+    if (Platform.OS === 'web') {
+      (input.current as unknown as HTMLTextAreaElement | null)?.setSelectionRange(completion.caret, completion.caret);
+    } else {
+      input.current?.setSelection(completion.caret, completion.caret);
+    }
+  }, [completion, draft]);
 
   useEffect(() => {
     if (Platform.OS !== 'web') return;
@@ -217,8 +236,18 @@ export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhoto
     if (!alive.current) return;
     if (action === 'photos' || action === 'camera') { void selectPhotos(action === 'camera'); return; }
     if (action === 'discard') { onDiscardDraft?.(); return; }
+    if (action === 'favorites') { Keyboard.dismiss(); setFavoritesOpen(true); return; }
     appendDraft({ meal: 'Ich habe gegessen: ', activity: 'Meine Bewegung heute: ', restaurant: 'Ich gehe heute ins Restaurant. Worauf sollte ich achten? ' }[action]);
   }
+  function chooseFavorite(favorite: Favorite, match?: FavoriteMatch) {
+    if (externalBusy || sending || picking || editor || pending) return;
+    const value = insertFavorite(draft, favorite, match);
+    if (value.length > 8000) { setSendError('Bitte kürze deinen Entwurf, bevor du einen Favoriten ergänzt.'); return; }
+    const caret = match ? value.length - (draft.length - match.end) : value.length;
+    setDraft(value); setCompletion({ text: value, caret }); setSelection({ start: caret, end: caret }); setSendError('');
+  }
+  const matches = favorites.ready && !externalBusy && !sending && !picking && !editor && !pending && !actionsOpen && !favoritesOpen && draft !== completion?.text
+    ? favoriteMatches(favorites.favorites, draft, selection) : [];
   function correct(entry: Entry) {
     appendDraft(`Korrektur zu „${entry.label}“${entry.amount ? ` (${entry.amount})` : ''}: `);
   }
@@ -238,11 +267,14 @@ export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhoto
   });
 
   return <View style={s.fill}>
-    <ScrollView ref={scroll} style={s.fill} contentContainerStyle={[s.messages, wide && s.messagesWide]} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+    <ScrollView ref={scroll} style={s.fill} contentContainerStyle={[s.messages, wide && s.messagesWide]} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === 'web' ? 'none' : Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
       onContentSizeChange={() => { if (scrollToBottom.current && messages.length) { scroll.current?.scrollToEnd({ animated: false }); scrollToBottom.current = false; } }}>
       {summary && <DaySummary summary={summary} onTargets={externalBusy || sending || picking || editor ? undefined : onTargets} onCorrect={externalBusy || sending || picking || editor || pending ? undefined : correct}
+        favorites={favorites.favorites} favoriteBusy={favorites.busy}
+        onFavorite={externalBusy || sending || picking || editor || loading || loadError || !favorites.ready ? undefined : entry => void favorites.toggle(entry)}
         onEdit={externalBusy || sending || picking || editor || pending || actionBusy || loading || loadError || summary.pending_count ? undefined : entry => openEditor(entry, 'edit')}
         onDelete={externalBusy || sending || picking || editor || pending || actionBusy || loading || loadError || summary.pending_count ? undefined : entry => openEditor(entry, 'delete')} />}
+      {!!favorites.error && <View style={s.field}><ErrorNotice text={favorites.error} /><Button variant="ghost" label="Favoriten erneut laden" onPress={favorites.reload} /></View>}
       {!!(summary?.pending_photo_deletions ?? initialPendingPhotoDeletions) && <Text accessibilityLiveRegion="polite" style={s.small}>Fotos werden im Hintergrund entfernt.</Text>}
       {summary && !summary.ai_enabled && <Text style={s.small}>Die KI ist noch nicht verbunden. Deine Nachrichten bleiben als Tagebuch gespeichert und können später ausgewertet werden.</Text>}
       <View style={s.divider}><View style={s.dividerLine} /><Text style={s.eyebrow}>Gespräch</Text><View style={s.dividerLine} /></View>
@@ -282,10 +314,12 @@ export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhoto
       </ScrollView>}
       {picking && <Text accessibilityLiveRegion="polite" style={s.small}>Bilder werden vorbereitet …</Text>}
       {!!uploadStatus && <Text accessibilityLiveRegion="polite" style={s.small}>{uploadStatus}</Text>}
+      <FavoriteSuggestions matches={matches} onChoose={match => chooseFavorite(match.favorite, match)} />
       <View style={[s.composer, inputFocused && s.composerFocused]}>
         <Button variant="ghost" icon="plus" iconOnly round label="Hinzufügen" accessibilityLabel="Nachricht ergänzen" expanded={actionsOpen}
           disabled={externalBusy || sending || picking || !!editor || !!pending} onPress={() => { Keyboard.dismiss(); setActionsOpen(true); }} />
-        <TextInput ref={input} accessibilityLabel="Nachricht" placeholder="Erzähl von deinem Tag …" placeholderTextColor="#687061" value={draft} onChangeText={setDraft}
+        <TextInput ref={input} accessibilityLabel="Nachricht" placeholder="Erzähl von deinem Tag …" placeholderTextColor="#687061" value={draft} onChangeText={value => { setDraft(value); setCompletion(null); }}
+          onSelectionChange={event => setSelection(event.nativeEvent.selection)}
           onFocus={() => setInputFocused(true)} onBlur={() => setInputFocused(false)} editable={!externalBusy && !sending && !editor && !pending} multiline {...(Platform.OS === 'web' ? { rows: 1 } : {})} maxLength={8000} style={s.composerInput} />
         <Button icon={pending ? 'history' : 'send'} iconOnly round loading={sending} label={sending ? 'Speichern …' : pending ? 'Erneut senden' : 'Senden'}
           disabled={externalBusy || sendBlocked || sending || picking || !!editor || (!draft.trim() && !photos.length) || loading || !!loadError} onPress={() => void send()} />
@@ -294,6 +328,7 @@ export function Chat({ userId, date, timeZone, draft, setDraft, photos, setPhoto
     </View></FormScrollView>
     <ComposerActions visible={actionsOpen} photosEnabled={!!summary?.photos_enabled} photoLimitReached={photos.length >= 4} canDiscard={!!onDiscardDraft}
       onClose={() => setActionsOpen(false)} onAction={chooseAction} />
+    <FavoritesSheet visible={favoritesOpen} model={favorites} onClose={() => setFavoritesOpen(false)} onChoose={chooseFavorite} />
     {editor && <EntryEditor date={date} entry={editor.entry} mode={editor.mode} analysisBusy={!!summary?.pending_count}
       onClose={closeEditor} onRefresh={() => refresh.current()}
       onSaved={() => { closeEditor(); refresh.current(); onSaved(); }} />}

@@ -103,7 +103,9 @@ test('web leaves keyboard handling to the browser and never subscribes to native
   assert.equal(root.props.children.props.enabled, false); assert.equal(screen.listeners.size, 0);
   const form = harness('web');
   let revealed = false;
-  form.render('FormScrollView', {}).props.onFocus({ target: { scrollIntoView: () => { revealed = true; } } });
+  const scroll = form.render('FormScrollView', {});
+  assert.equal(scroll.props.keyboardDismissMode, 'none');
+  scroll.props.onFocus({ target: { scrollIntoView: () => { revealed = true; } } });
   assert.equal(revealed, true);
   assert.equal(form.frames.size, 0); assert.equal(form.listeners.size, 0);
 });

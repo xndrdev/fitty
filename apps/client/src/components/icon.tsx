@@ -2,6 +2,8 @@ import Svg, { Path } from 'react-native-svg';
 import { Platform } from 'react-native';
 
 const paths = {
+  menu: 'M4 6h16 M4 12h16 M4 18h16',
+  star: 'm12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z',
   calendar: 'M5 5h14v15H5z M5 9h14 M8 3v4 M16 3v4 M8 13h2 M14 13h2 M8 16h2',
   history: 'M4 10a8 8 0 1 1 1 8 M4 4v6h6 M12 7v5l3 2',
   user: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0 M4 21v-2a8 6 0 0 1 16 0v2',

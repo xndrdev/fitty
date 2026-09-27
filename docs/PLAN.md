@@ -157,6 +157,8 @@ As of September 17, 2026: the daily view adopts the colors, fonts, sidebar, and 
 - [x] Persist daily drafts with text/photos and pending send/delete requests locally; handle storage errors and concurrent tabs.
 - [x] Store optional calorie/macronutrient targets with effective dates, show daily progress, and include the applicable targets in the AI context.
 - [x] Add a private progress photo history with capture dates, viewing angles, comparison of two photos, and confirmed removal.
+- [x] Store personal favorite meal portions and offer matching suggestions while typing, plus a favorites picker.
+- [x] Condense the mobile header into a single row with navigation and daily actions in a hamburger menu.
 - [ ] Complete the remaining loading/error states and restore direct entry dialogs after a restart.
 - [ ] Test the same examples on a physical iPhone and in a desktop browser.
 - [ ] Check keyboard usability, screen reader labels, contrast, and reduced motion.

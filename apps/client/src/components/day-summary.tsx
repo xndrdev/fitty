@@ -6,6 +6,7 @@ import { emptyTargets, targetProgress } from '../lib/targets';
 import { styles as s } from '../styles/day-summary';
 import { styles as editorStyles } from '../styles/entry-editor';
 import { Button } from './ui';
+import { favoriteForEntry, type Favorite } from '../lib/favorites';
 
 const number = (value: number) => value.toLocaleString('de-DE', { maximumFractionDigits: 1 });
 const sourceLabels = { estimate: 'Schätzung', user: 'Deine Angaben', device: 'Geräteangabe' };
@@ -35,9 +36,12 @@ type DaySummaryProps = {
   onEdit?: (entry: Entry) => void;
   onDelete?: (entry: Entry) => void;
   onTargets?: () => void;
+  favorites?: Favorite[];
+  onFavorite?: (entry: Entry) => void;
+  favoriteBusy?: string;
 };
 
-export function DaySummary({ summary, onCorrect, onEdit, onDelete, onTargets }: DaySummaryProps) {
+export function DaySummary({ summary, onCorrect, onEdit, onDelete, onTargets, favorites = [], onFavorite, favoriteBusy }: DaySummaryProps) {
   const [expanded, setExpanded] = useState(false);
   const [focused, setFocused] = useState(false);
   const { width } = useWindowDimensions();
@@ -109,6 +113,9 @@ export function DaySummary({ summary, onCorrect, onEdit, onDelete, onTargets }: 
           <View style={s.entryHeading}>
             <Text style={s.entryTitle}>{entry.label}</Text>
             <Text style={[s.sourceBadge, entry.source === 'estimate' && s.estimateBadge]}>{sourceLabels[entry.source]}</Text>
+            {entry.kind === 'food' && <Button variant="ghost" icon="star" iconOnly label="Favorit" selected={!!favoriteForEntry(favorites, entry)}
+              accessibilityLabel={`${entry.label} ${favoriteForEntry(favorites, entry) ? 'aus Favoriten entfernen' : 'als Favorit speichern'}`}
+              disabled={!onFavorite || !!favoriteBusy} loading={favoriteBusy === (favoriteForEntry(favorites, entry)?.id ?? entry.id)} onPress={() => onFavorite?.(entry)} />}
           </View>
           {!!entry.amount && <Text style={s.detail}>{entry.amount}</Text>}
           {entry.kind === 'food' ? <Text style={s.detail}>{[

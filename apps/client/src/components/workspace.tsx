@@ -9,15 +9,16 @@ import { Chat } from './chat';
 import { TargetsForm } from './targets-form';
 import { ProgressPhotos } from './progress-photos';
 import { useDrafts } from '../hooks/use-drafts';
+import { useFavorites } from '../hooks/use-favorites';
 import { styles as draftStyles } from '../styles/drafts';
 import { DayDelete } from './day-delete';
 import { FormScrollView, useKeyboardVisible } from './keyboard-layout';
+import { WorkspaceMenu, type WorkspaceAction, type WorkspacePane } from './workspace-menu';
 
 export function Workspace({ email, userId }: { email: string; userId: string }) {
   const { width, height } = useWindowDimensions();
   const wide = width >= 900;
   const keyboardVisible = useKeyboardVisible();
-  const typing = !wide && keyboardVisible;
   const compactChat = !wide && (keyboardVisible || height < 650);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileError, setProfileError] = useState('');
@@ -27,7 +28,8 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
   const [dateError, setDateError] = useState('');
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [focusedControl, setFocusedControl] = useState('');
-  const [pane, setPane] = useState<'chat' | 'history' | 'profile' | 'progress'>('chat');
+  const [pane, setPane] = useState<WorkspacePane>('chat');
+  const [menuOpen, setMenuOpen] = useState(false);
   const [working, setBusy] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [chatRevision, setChatRevision] = useState(0);
@@ -39,6 +41,7 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
   const [historyError, setHistoryError] = useState('');
   const [focusedDay, setFocusedDay] = useState('');
   const drafts = useDrafts(userId);
+  const favorites = useFavorites(userId);
   const currentDraft = drafts.get(date);
   const [discardOpen, setDiscardOpen] = useState(false);
   const [logoutError, setLogoutError] = useState('');
@@ -73,6 +76,7 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
     return () => controller.abort();
   }, [revision, loadDays]);
   useEffect(() => { setDateInput(date); setDateError(''); }, [date]);
+  useEffect(() => { if (wide) setMenuOpen(false); }, [wide]);
 
   function openDate(value: string) {
     if (busy) return;
@@ -82,7 +86,17 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
     }
     Keyboard.dismiss(); setDate(value); setDateInput(value); setDateError(''); setDatePickerOpen(false); setPane('chat'); setDeletedDate('');
   }
-  function openPane(value: typeof pane) { Keyboard.dismiss(); setPane(value); }
+  function openPane(value: typeof pane) { Keyboard.dismiss(); setDatePickerOpen(false); setPane(value); }
+  function chooseMenuAction(action: WorkspaceAction) {
+    if (busy) return;
+    if (action === 'previous') openDate(moveDate(date, -1));
+    else if (action === 'next') openDate(moveDate(date, 1));
+    else if (action === 'today') openDate(today);
+    else if (action === 'date') { openPane('chat'); setDateInput(date); setDateError(''); setDatePickerOpen(true); }
+    else if (action === 'delete') { openPane('chat'); setDeleteOpen(true); }
+    else if (action === 'logout') void logout();
+    else openPane(action);
+  }
   async function logout() {
     setBusy(true); setLogoutError('');
     try {
@@ -123,6 +137,8 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
     </View></>}
   </ScrollView> : null;
   const today = profile ? todayIn(profile.time_zone) : '';
+  const mobileTitle = pane === 'profile' ? 'Profil' : pane === 'history' ? 'Verlauf' : pane === 'progress' ? 'Fortschritt'
+    : !date ? 'fitty' : `${date === today ? 'Heute · ' : ''}${new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'short', ...(date !== today ? { weekday: 'short' } : {}), timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`))}`;
   const initials = (profile?.display_name || 'Fitty').split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase();
   const history = <>
     <ErrorNotice text={drafts.listError} />
@@ -164,33 +180,28 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
     </View>}
     <View style={s.main}>
       {!!logoutError && <View style={s.field}><ErrorNotice text={logoutError} /></View>}
-      {!wide && !typing && <View style={s.mobileHeader}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Tageschat" disabled={busy} accessibilityState={{ disabled: busy, selected: pane === 'chat' }} onPress={() => openPane('chat')}
-          onFocus={() => setFocusedControl('brand')} onBlur={() => setFocusedControl('')} style={[s.brandLink, focusedControl === 'brand' && s.focus]}><Brand /></Pressable>
-        <View style={s.inline}>
-        <Button variant="ghost" icon="history" iconOnly={width < 390} selected={pane === 'history'} label="Verlauf" disabled={busy} onPress={() => openPane('history')} />
-        <Button variant="ghost" icon="photo" iconOnly selected={pane === 'progress'} label="Fortschrittsfotos" disabled={busy} onPress={() => openPane('progress')} />
-        <Button variant="ghost" icon="user" iconOnly selected={pane === 'profile'} label="Profil" disabled={busy} onPress={() => openPane('profile')} />
-      </View></View>}
+      {!wide && <View style={s.mobileHeader} testID="workspace-header">
+        <Button variant="ghost" icon="menu" iconOnly round label="Menü öffnen" expanded={menuOpen} disabled={busy}
+          onPress={() => { Keyboard.dismiss(); setMenuOpen(true); }} />
+        <Text role="heading" aria-level={1} numberOfLines={1} accessibilityLabel={pane === 'chat' && date ? dateLabel(date, true) : mobileTitle} style={s.mobileTitle}>{mobileTitle}</Text>
+      </View>}
       {profileError ? <View style={s.pageScroll}><ErrorNotice text={profileError} /><Button label="Erneut laden" onPress={() => setRevision(n => n + 1)} />{!wide && <Button secondary label="Abmelden" onPress={() => void logout()} />}</View>
         : !profile || !date ? <View style={s.pageScroll}><Text style={s.subtitle}>Dein Tagebuch wird geladen …</Text></View>
         : pane === 'profile' ? <ProfileForm userId={userId} profile={profile} email={email} onSaved={setProfile} onLogout={logout} setBusy={setBusy} onBack={() => openPane('chat')} />
         : pane === 'progress' ? <FormScrollView contentContainerStyle={s.pageScroll}><ProgressPhotos userId={userId} timeZone={profile.time_zone} onBusy={setBusy} /></FormScrollView>
         : pane === 'history' ? <ScrollView contentContainerStyle={s.pageScroll}><Text role="heading" aria-level={1} style={s.title}>Dein Verlauf</Text>{history}</ScrollView>
         : <>
-          <View style={[s.topBar, wide && s.topBarWide, compactChat && s.topBarTyping]}>
-            <View style={s.headerRow}><View style={s.dayHeading}>{wide && <Text style={s.eyebrow}>Dein Tag</Text>}
-              <Text role="heading" aria-level={1} accessibilityLabel={dateLabel(date, true)} style={[s.heading, wide && s.headingWide, compactChat && s.headingTyping]}>{width < 360
-                ? new Intl.DateTimeFormat('de-DE', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`))
-                : dateLabel(date, true)}</Text></View>
-              {!typing && <View style={[s.row, deletionStyles.dayActions]}>
+          {(wide || datePickerOpen || deletedDate === date) && <View style={[s.topBar, wide && s.topBarWide]}>
+            {wide && <View style={s.headerRow}><View style={s.dayHeading}><Text style={s.eyebrow}>Dein Tag</Text>
+              <Text role="heading" aria-level={1} accessibilityLabel={dateLabel(date, true)} style={[s.heading, s.headingWide]}>{dateLabel(date, true)}</Text></View>
+              <View style={[s.row, deletionStyles.dayActions]}>
                 <Button secondary icon="left" iconOnly label="Vorheriger Tag" disabled={busy || date === '1900-01-01'} onPress={() => openDate(moveDate(date, -1))} />
                 <Button secondary label="Heute" selected={date === today} disabled={busy} onPress={() => openDate(today)} />
                 <Button secondary icon="right" iconOnly label="Nächster Tag" disabled={busy || date === '9999-12-31'} onPress={() => openDate(moveDate(date, 1))} />
                 <Button variant="ghost" icon="calendar" iconOnly label="Datum wählen" expanded={datePickerOpen} disabled={busy} onPress={() => setDatePickerOpen(value => !value)} />
                 <Button variant="ghost" icon="trash" iconOnly={!wide} label="Tageschat löschen" disabled={busy} onPress={() => { Keyboard.dismiss(); setDatePickerOpen(false); setDeleteOpen(true); }} />
-              </View>}
-            </View>
+              </View>
+            </View>}
             {datePickerOpen && <View style={s.field}><Text style={s.label}>Zu einem Datum springen</Text><View style={s.row}>
               <TextInput accessibilityLabel="Datum (JJJJ-MM-TT)" value={dateInput} onChangeText={setDateInput} editable={!busy} autoFocus maxLength={10} placeholder="JJJJ-MM-TT"
                 onFocus={() => setFocusedControl('date')} onBlur={() => setFocusedControl('')} style={[s.dateInput, focusedControl === 'date' && s.focus]} onSubmitEditing={() => openDate(dateInput)} />
@@ -198,8 +209,8 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
               <Button variant="ghost" label="Schließen" disabled={busy} onPress={() => { Keyboard.dismiss(); setDatePickerOpen(false); setDateError(''); }} />
             </View><ErrorNotice text={dateError} /></View>}
             {deletedDate === date && <Text accessibilityLiveRegion="polite" style={s.success}>Tageschat gelöscht.</Text>}
-          </View>
-          <Chat key={`${date}:${chatRevision}`} userId={userId} date={date} timeZone={profile.time_zone} draft={currentDraft.value.text}
+          </View>}
+          <Chat key={`${date}:${chatRevision}`} favorites={favorites} userId={userId} date={date} timeZone={profile.time_zone} draft={currentDraft.value.text}
             externalBusy={deleteOpen || discardOpen || !currentDraft.loaded || !!currentDraft.value.deletion}
             sendBlocked={currentDraft.conflict || !!currentDraft.error} draftNotice={draftNotice}
             onDiscardDraft={canDiscardDraft ? () => { Keyboard.dismiss(); setDiscardOpen(true); } : undefined}
@@ -214,6 +225,8 @@ export function Workspace({ email, userId }: { email: string; userId: string }) 
 
         </>}
     </View>
+    <WorkspaceMenu visible={menuOpen} pane={pane} date={date} today={today} disabled={busy}
+      onClose={() => setMenuOpen(false)} onAction={chooseMenuAction} />
   </View>;
 }
 
